@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Notificator - Inscription</title>
+    <style>
+      :root {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background: #0d1117;
+        color: #e6edf3;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 720px;
+        padding: 48px 24px 96px;
+      }
+      h1, h2 {
+        margin-bottom: 8px;
+      }
+      .card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+        margin-bottom: 24px;
+      }
+      label {
+        display: block;
+        margin: 12px 0 6px;
+        font-weight: 600;
+      }
+      input, button {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid #30363d;
+        background: #0d1117;
+        color: #e6edf3;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      button {
+        background: linear-gradient(135deg, #238636, #2ea043);
+        border: none;
+        margin-top: 12px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 30px rgba(46, 160, 67, 0.25);
+      }
+      .status {
+        color: #7ee787;
+        font-weight: 600;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #238636;
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 14px;
+      }
+      .notification-banner {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 16px;
+        padding: 16px;
+        display: none;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+      }
+      .notification-banner h3 {
+        margin: 0 0 8px;
+      }
+      .notification-banner button {
+        width: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Inscrivez-vous aux notifications</h1>
+      <p>Enregistrez votre email pour recevoir les notifications envoyées par l'administrateur. Gardez cette page ouverte : une pop-up apparaîtra dès qu'une alerte est publiée.</p>
+
+      <section class="card">
+        <h2>Votre profil</h2>
+        <form id="subscribe-form">
+          <label for="email">Email (optionnel)</label>
+          <input id="email" type="email" placeholder="prenom@exemple.com" />
+          <button type="submit">Je m'inscris</button>
+        </form>
+        <p id="subscription-status" class="status"></p>
+        <div id="device-token" class="badge" style="display:none;"></div>
+      </section>
+
+      <section class="card">
+        <h2>Instructions</h2>
+        <ul>
+          <li>Inscrivez-vous puis laissez cette page ouverte.</li>
+          <li>Lorsqu'une notification est envoyée, une bannière apparaîtra en bas de l'écran.</li>
+          <li>Cliquez sur « Ouvrir » pour consulter l'image associée à la notification.</li>
+        </ul>
+      </section>
+    </main>
+
+    <div id="banner" class="notification-banner">
+      <h3 id="banner-title"></h3>
+      <p id="banner-body"></p>
+      <div style="display:flex; gap:12px; flex-wrap: wrap;">
+        <button id="open-button" type="button">Ouvrir l'image</button>
+        <button id="dismiss-button" type="button" style="background:#30363d;">Plus tard</button>
+      </div>
+    </div>
+
+    <script>
+      const statusEl = document.getElementById('subscription-status');
+      const tokenBadge = document.getElementById('device-token');
+      const banner = document.getElementById('banner');
+      const bannerTitle = document.getElementById('banner-title');
+      const bannerBody = document.getElementById('banner-body');
+      const openButton = document.getElementById('open-button');
+      const dismissButton = document.getElementById('dismiss-button');
+
+      let deviceToken = localStorage.getItem('deviceToken');
+      let deliveries = [];
+
+      const subscribeForm = document.getElementById('subscribe-form');
+      subscribeForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const email = document.getElementById('email').value;
+        const response = await fetch('/api/subscribers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email || null }),
+        });
+
+        if (!response.ok) {
+          statusEl.textContent = "Impossible de vous inscrire pour le moment.";
+          statusEl.style.color = '#f85149';
+          return;
+        }
+
+        const data = await response.json();
+        deviceToken = data.device_token;
+        localStorage.setItem('deviceToken', deviceToken);
+        statusEl.textContent = 'Inscription enregistrée. Gardez cette page ouverte !';
+        statusEl.style.color = '#7ee787';
+        tokenBadge.textContent = `Token : ${deviceToken}`;
+        tokenBadge.style.display = 'inline-flex';
+        startPolling();
+      });
+
+      function showBanner(delivery) {
+        bannerTitle.textContent = delivery.notification.title;
+        bannerBody.textContent = delivery.notification.body || 'Nouvelle image disponible.';
+        banner.dataset.deliveryId = delivery.id;
+        banner.dataset.targetUrl = delivery.notification.target_url;
+        banner.dataset.imageUrl = delivery.notification.image_url;
+        banner.style.display = 'block';
+      }
+
+      async function pollNotifications() {
+        if (!deviceToken) return;
+        const response = await fetch(`/api/push/${deviceToken}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        deliveries = data.notifications || [];
+        const latest = deliveries.find((delivery) => delivery.status === 'pending');
+        if (latest) {
+          await fetch(`/api/push/${latest.id}/delivered`, { method: 'POST' });
+          showBanner(latest);
+        }
+      }
+
+      function startPolling() {
+        pollNotifications();
+        setInterval(pollNotifications, 7000);
+      }
+
+      openButton.addEventListener('click', async () => {
+        const deliveryId = banner.dataset.deliveryId;
+        const targetUrl = banner.dataset.targetUrl;
+        await fetch(`/api/push/${deliveryId}/opened`, { method: 'POST' });
+        window.location.href = `/notification.html?image=${encodeURIComponent(banner.dataset.imageUrl)}&target=${encodeURIComponent(targetUrl)}`;
+      });
+
+      dismissButton.addEventListener('click', () => {
+        banner.style.display = 'none';
+      });
+
+      if (deviceToken) {
+        tokenBadge.textContent = `Token : ${deviceToken}`;
+        tokenBadge.style.display = 'inline-flex';
+        statusEl.textContent = 'Session de notification rétablie. Les alertes arriveront automatiquement.';
+        startPolling();
+      }
+    </script>
+  </body>
+</html>
