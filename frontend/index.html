@@ -92,14 +92,12 @@
   <body>
     <main>
       <h1>Inscrivez-vous aux notifications</h1>
-      <p>Enregistrez votre email pour recevoir les notifications envoyées par l'administrateur. Gardez cette page ouverte : une pop-up apparaîtra dès qu'une alerte est publiée.</p>
+      <p>Inscrivez-vous pour recevoir des notifications push. Gardez cette page ouverte : une pop-up apparaîtra dès qu'une alerte est publiée.</p>
 
       <section class="card">
-        <h2>Votre profil</h2>
+        <h2>Votre session</h2>
         <form id="subscribe-form">
-          <label for="email">Email (optionnel)</label>
-          <input id="email" type="email" placeholder="prenom@exemple.com" />
-          <button type="submit">Je m'inscris</button>
+          <button type="submit">Activer les notifications</button>
         </form>
         <p id="subscription-status" class="status"></p>
         <div id="device-token" class="badge" style="display:none;"></div>
@@ -110,7 +108,7 @@
         <ul>
           <li>Inscrivez-vous puis laissez cette page ouverte.</li>
           <li>Lorsqu'une notification est envoyée, une bannière apparaîtra en bas de l'écran.</li>
-          <li>Cliquez sur « Ouvrir » pour consulter l'image associée à la notification.</li>
+          <li>Cliquez sur « Marquer comme lu » pour fermer la bannière.</li>
         </ul>
       </section>
     </main>
@@ -119,8 +117,8 @@
       <h3 id="banner-title"></h3>
       <p id="banner-body"></p>
       <div style="display:flex; gap:12px; flex-wrap: wrap;">
-        <button id="open-button" type="button">Ouvrir l'image</button>
-        <button id="dismiss-button" type="button" style="background:#30363d;">Plus tard</button>
+        <button id="open-button" type="button">Marquer comme lu</button>
+        <button id="dismiss-button" type="button" style="background:#30363d;">Masquer</button>
       </div>
     </div>
 
@@ -139,11 +137,10 @@
       const subscribeForm = document.getElementById('subscribe-form');
       subscribeForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const email = document.getElementById('email').value;
         const response = await fetch('/api/subscribers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email || null }),
+          body: JSON.stringify({}),
         });
 
         if (!response.ok) {
@@ -164,10 +161,8 @@
 
       function showBanner(delivery) {
         bannerTitle.textContent = delivery.notification.title;
-        bannerBody.textContent = delivery.notification.body || 'Nouvelle image disponible.';
+        bannerBody.textContent = delivery.notification.body || 'Notification reçue.';
         banner.dataset.deliveryId = delivery.id;
-        banner.dataset.targetUrl = delivery.notification.target_url;
-        banner.dataset.imageUrl = delivery.notification.image_url;
         banner.style.display = 'block';
       }
 
@@ -191,9 +186,8 @@
 
       openButton.addEventListener('click', async () => {
         const deliveryId = banner.dataset.deliveryId;
-        const targetUrl = banner.dataset.targetUrl;
         await fetch(`/api/push/${deliveryId}/opened`, { method: 'POST' });
-        window.location.href = `/notification.html?image=${encodeURIComponent(banner.dataset.imageUrl)}&target=${encodeURIComponent(targetUrl)}`;
+        banner.style.display = 'none';
       });
 
       dismissButton.addEventListener('click', () => {

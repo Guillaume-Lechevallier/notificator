@@ -1,11 +1,11 @@
 # Notificator
 
-Application de notifications avec un backend Python (FastAPI), un frontend statique et une base MySQL. Une interface d'administration permet d'envoyer des notifications illustrées à tous les abonnés. Les utilisateurs s'inscrivent via le lien d'inscription et reçoivent une pop-up avec une image et un lien de destination.
+Application de notifications push avec un backend Python (FastAPI), un frontend statique et une base MySQL. L'interface d'administration envoie des messages courts à tous les abonnés. Les utilisateurs s'inscrivent via le lien d'inscription et reçoivent une pop-up sobre avec le titre et le message.
 
 ## Aperçu des dossiers
 
 - `backend/` : API FastAPI, modèles SQLAlchemy et configuration de la base de données.
-- `frontend/` : pages statiques (inscription, administration et affichage d'image).
+- `frontend/` : pages statiques (inscription et administration).
 - `last_update.sql` : script SQL à exécuter sur MySQL pour provisionner les tables.
 - `docker-compose.yml` : lance MySQL et l'API sur le port 8000.
 
@@ -52,16 +52,16 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 ## Flux fonctionnel
 
-1. Un utilisateur s'inscrit via la page `index.html`, qui enregistre l'email (optionnel) et récupère un `device_token`.
-2. L'administrateur remplit le formulaire (titre, texte, URL d'image, URL cible) et clique sur le bouton cloche pour envoyer la notification.
+1. Un utilisateur s'inscrit via la page `index.html`, qui récupère un `device_token`.
+2. L'administrateur remplit le formulaire (titre et message facultatif) puis clique sur le bouton cloche pour envoyer la notification.
 3. L'API crée une notification et une livraison pour chaque abonné.
-4. Les abonnés pollent `/api/push/{device_token}` pour récupérer les notifications en attente. Une pop-up s'affiche avec le visuel et un bouton pour ouvrir la page image (`notification.html`).
+4. Les abonnés pollent `/api/push/{device_token}` pour récupérer les notifications en attente. Une pop-up s'affiche avec le titre et le message, puis peut être marquée comme lue.
 
 ## API (résumé)
 
-- `POST /api/subscribers` : crée un abonné (payload `{ email?: string }`).
+- `POST /api/subscribers` : crée un abonné (payload vide).
 - `GET /api/notifications` : liste les notifications envoyées.
-- `POST /api/notifications` : crée une notification (payload `{ title, body?, image_url, target_url }`).
+- `POST /api/notifications` : crée une notification (payload `{ title, body? }`).
 - `GET /api/push/{device_token}` : récupère les livraisons associées au token.
 - `POST /api/push/{delivery_id}/delivered` : marque une livraison comme livrée.
 - `POST /api/push/{delivery_id}/opened` : marque une livraison comme ouverte.

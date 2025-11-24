@@ -1,17 +1,16 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 
 
 class SubscriberCreate(BaseModel):
-    email: Optional[str] = None
+    pass
 
 
 class SubscriberResponse(BaseModel):
     id: int
     device_token: str
-    email: Optional[str]
     created_at: datetime
 
     class Config:
@@ -21,16 +20,12 @@ class SubscriberResponse(BaseModel):
 class NotificationCreate(BaseModel):
     title: str
     body: Optional[str] = None
-    image_url: HttpUrl
-    target_url: HttpUrl
 
 
 class NotificationResponse(BaseModel):
     id: int
     title: str
     body: Optional[str]
-    image_url: HttpUrl
-    target_url: HttpUrl
     created_at: datetime
 
     class Config:

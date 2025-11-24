@@ -29,7 +29,7 @@
   </head>
   <body>
     <h1><span class="bell-icon">🔔</span> Panneau d'administration</h1>
-    <p>Publiez une notification illustrée : un message, une image et une URL d'atterrissage. Les abonnés verront une pop-up cliquable.</p>
+    <p>Publiez une notification push simple. Les abonnés verront une pop-up et pourront la marquer comme lue.</p>
 
     <section class="panel">
       <h2>Composer une notification</h2>
@@ -37,13 +37,8 @@
       <input id="title" type="text" placeholder="Nouveau visuel disponible" required />
       <label for="body">Texte (optionnel)</label>
       <textarea id="body" placeholder="Ajoutez un message pour vos abonnés"></textarea>
-      <label for="image">URL de l'image</label>
-      <input id="image" type="url" placeholder="https://exemple.com/image.jpg" required />
-      <label for="target">Lien cible</label>
-      <input id="target" type="url" placeholder="https://exemple.com/landing" required />
       <div class="actions">
         <button class="primary bell" id="send"><span>🔔</span> Envoyer la notification</button>
-        <button class="ghost" type="button" id="preview">Aperçu</button>
         <span class="badge" id="status">Prêt</span>
       </div>
     </section>
@@ -58,8 +53,6 @@
       const history = document.getElementById('history');
       const titleInput = document.getElementById('title');
       const bodyInput = document.getElementById('body');
-      const imageInput = document.getElementById('image');
-      const targetInput = document.getElementById('target');
 
       async function fetchHistory() {
         const response = await fetch('/api/notifications');
@@ -68,7 +61,7 @@
         history.innerHTML = '';
         items.forEach((item) => {
           const li = document.createElement('li');
-          li.innerHTML = `<h3>${item.title}</h3><div class="meta">${new Date(item.created_at).toLocaleString()}</div><div>${item.body || 'Pas de message'}</div><div class="meta">Image : <a href="${item.image_url}" target="_blank" rel="noreferrer">${item.image_url}</a></div><div class="meta">Cible : <a href="${item.target_url}" target="_blank" rel="noreferrer">${item.target_url}</a></div>`;
+          li.innerHTML = `<h3>${item.title}</h3><div class="meta">${new Date(item.created_at).toLocaleString()}</div><div>${item.body || 'Pas de message'}</div>`;
           history.appendChild(li);
         });
       }
@@ -80,9 +73,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: titleInput.value,
-            body: bodyInput.value || null,
-            image_url: imageInput.value,
-            target_url: targetInput.value,
+          body: bodyInput.value || null,
           }),
         });
 
@@ -98,11 +89,6 @@
       }
 
       document.getElementById('send').addEventListener('click', sendNotification);
-      document.getElementById('preview').addEventListener('click', () => {
-        const url = `/notification.html?image=${encodeURIComponent(imageInput.value)}&target=${encodeURIComponent(targetInput.value)}`;
-        window.open(url, '_blank');
-      });
-
       fetchHistory();
     </script>
   </body>

@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api", tags=["notifications"])
 @router.post("/subscribers", response_model=schemas.SubscriberResponse)
 def register_subscriber(payload: schemas.SubscriberCreate, db: Session = Depends(get_db)):
     device_token = uuid4().hex
-    subscriber = models.Subscriber(email=payload.email, device_token=device_token)
+    subscriber = models.Subscriber(device_token=device_token)
     db.add(subscriber)
     db.commit()
     db.refresh(subscriber)
@@ -27,12 +27,7 @@ def list_notifications(db: Session = Depends(get_db)):
 
 @router.post("/notifications", response_model=schemas.NotificationResponse)
 def send_notification(payload: schemas.NotificationCreate, db: Session = Depends(get_db)):
-    notification = models.Notification(
-        title=payload.title,
-        body=payload.body,
-        image_url=str(payload.image_url),
-        target_url=str(payload.target_url),
-    )
+    notification = models.Notification(title=payload.title, body=payload.body)
     db.add(notification)
     db.flush()
 

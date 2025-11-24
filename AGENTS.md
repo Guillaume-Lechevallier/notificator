@@ -1,6 +1,7 @@
 # Instructions pour les agents
 
 - L'application est composée d'un backend FastAPI (dossier `backend/`) et d'un frontend statique (dossier `frontend/`).
+- Les notifications sont désormais uniquement des push textuels (titre + corps facultatif) sans image ni redirection.
 - La base de données cible est MySQL ; utilisez la variable d'environnement `DATABASE_URL` (format `mysql+mysqlconnector://user:pass@host:port/db`).
 - Si le schéma SQL change, déplacez l'ancien contenu de `last_update.sql` dans `last_update_old.sql` et écrivez le nouveau SQL dans `last_update.sql`.
 - Ne générez pas de fichiers binaires ; privilégiez les assets statiques (HTML/CSS/JS).

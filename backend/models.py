@@ -11,7 +11,6 @@ class Subscriber(Base):
     __tablename__ = "subscribers"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), nullable=True)
     device_token = Column(String(64), unique=True, index=True, default=lambda: uuid.uuid4().hex)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -24,8 +23,6 @@ class Notification(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     body = Column(Text, nullable=True)
-    image_url = Column(Text, nullable=False)
-    target_url = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     deliveries = relationship("Delivery", back_populates="notification", cascade="all, delete-orphan")
