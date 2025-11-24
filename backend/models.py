@@ -12,6 +12,11 @@ class Subscriber(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     device_token = Column(String(64), unique=True, index=True, default=lambda: uuid.uuid4().hex)
+    label = Column(String(120), nullable=True)
+    endpoint = Column(Text, unique=True, nullable=False)
+    p256dh = Column(Text, nullable=False)
+    auth = Column(Text, nullable=False)
+    user_agent = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     deliveries = relationship("Delivery", back_populates="subscriber", cascade="all, delete-orphan")
@@ -23,6 +28,8 @@ class Notification(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     body = Column(Text, nullable=True)
+    image_url = Column(Text, nullable=True)
+    click_url = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     deliveries = relationship("Delivery", back_populates="notification", cascade="all, delete-orphan")

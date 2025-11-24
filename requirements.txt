@@ -4,3 +4,5 @@ SQLAlchemy==2.0.28
 mysql-connector-python==8.3.0
 pydantic==1.10.17
 python-multipart==0.0.9
+pywebpush==2.0.0
+cryptography==42.0.8

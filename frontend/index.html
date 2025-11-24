@@ -92,113 +92,112 @@
   <body>
     <main>
       <h1>Inscrivez-vous aux notifications</h1>
-      <p>Inscrivez-vous pour recevoir des notifications push. Gardez cette page ouverte : une pop-up apparaîtra dès qu'une alerte est publiée.</p>
+      <p>Activez le Web Push pour recevoir des alertes même lorsque l'onglet est fermé.</p>
 
       <section class="card">
         <h2>Votre session</h2>
         <form id="subscribe-form">
-          <button type="submit">Activer les notifications</button>
+          <label for="label">Nom du commerce (facultatif)</label>
+          <input id="label" type="text" placeholder="boulangerie a" />
+          <button type="submit">Activer les notifications Web Push</button>
         </form>
         <p id="subscription-status" class="status"></p>
         <div id="device-token" class="badge" style="display:none;"></div>
       </section>
 
       <section class="card">
-        <h2>Instructions</h2>
+        <h2>Comment ça marche ?</h2>
         <ul>
-          <li>Inscrivez-vous puis laissez cette page ouverte.</li>
-          <li>Lorsqu'une notification est envoyée, une bannière apparaîtra en bas de l'écran.</li>
-          <li>Cliquez sur « Marquer comme lu » pour fermer la bannière.</li>
+          <li>Autorisez les notifications quand le navigateur vous le demande.</li>
+          <li>Un service worker s'occupe d'afficher les pop-ups même si la page est fermée.</li>
+          <li>Sur mobile, autorisez également les notifications système pour le navigateur.</li>
         </ul>
       </section>
     </main>
 
-    <div id="banner" class="notification-banner">
-      <h3 id="banner-title"></h3>
-      <p id="banner-body"></p>
-      <div style="display:flex; gap:12px; flex-wrap: wrap;">
-        <button id="open-button" type="button">Marquer comme lu</button>
-        <button id="dismiss-button" type="button" style="background:#30363d;">Masquer</button>
-      </div>
-    </div>
-
     <script>
       const statusEl = document.getElementById('subscription-status');
       const tokenBadge = document.getElementById('device-token');
-      const banner = document.getElementById('banner');
-      const bannerTitle = document.getElementById('banner-title');
-      const bannerBody = document.getElementById('banner-body');
-      const openButton = document.getElementById('open-button');
-      const dismissButton = document.getElementById('dismiss-button');
+      const labelInput = document.getElementById('label');
 
-      let deviceToken = localStorage.getItem('deviceToken');
-      let deliveries = [];
+      function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      }
+
+      async function registerPush() {
+        if (!('serviceWorker' in navigator)) {
+          throw new Error('Service worker non supporté par ce navigateur.');
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          throw new Error("Les notifications ont été refusées.");
+        }
+
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        const configResponse = await fetch('/api/config');
+        if (!configResponse.ok) {
+          throw new Error('Impossible de récupérer la clé publique VAPID.');
+        }
+        const { public_key: publicKey } = await configResponse.json();
+
+        const existing = await registration.pushManager.getSubscription();
+        const sub =
+          existing ||
+          (await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+          }));
+
+        const body = {
+          subscription: sub.toJSON(),
+          label: labelInput.value || null,
+          user_agent: navigator.userAgent,
+        };
+
+        const response = await fetch('/api/subscribers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          throw new Error("Impossible d'enregistrer l'abonnement côté serveur.");
+        }
+
+        const data = await response.json();
+        localStorage.setItem('deviceToken', data.device_token);
+        tokenBadge.textContent = `Token : ${data.device_token}`;
+        tokenBadge.style.display = 'inline-flex';
+      }
 
       const subscribeForm = document.getElementById('subscribe-form');
       subscribeForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const response = await fetch('/api/subscribers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
-
-        if (!response.ok) {
-          statusEl.textContent = "Impossible de vous inscrire pour le moment.";
-          statusEl.style.color = '#f85149';
-          return;
-        }
-
-        const data = await response.json();
-        deviceToken = data.device_token;
-        localStorage.setItem('deviceToken', deviceToken);
-        statusEl.textContent = 'Inscription enregistrée. Gardez cette page ouverte !';
+        statusEl.textContent = 'Activation en cours...';
         statusEl.style.color = '#7ee787';
-        tokenBadge.textContent = `Token : ${deviceToken}`;
-        tokenBadge.style.display = 'inline-flex';
-        startPolling();
-      });
-
-      function showBanner(delivery) {
-        bannerTitle.textContent = delivery.notification.title;
-        bannerBody.textContent = delivery.notification.body || 'Notification reçue.';
-        banner.dataset.deliveryId = delivery.id;
-        banner.style.display = 'block';
-      }
-
-      async function pollNotifications() {
-        if (!deviceToken) return;
-        const response = await fetch(`/api/push/${deviceToken}`);
-        if (!response.ok) return;
-        const data = await response.json();
-        deliveries = data.notifications || [];
-        const latest = deliveries.find((delivery) => delivery.status === 'pending');
-        if (latest) {
-          await fetch(`/api/push/${latest.id}/delivered`, { method: 'POST' });
-          showBanner(latest);
+        try {
+          await registerPush();
+          statusEl.textContent = 'Inscription Web Push confirmée. Vous pouvez fermer la page.';
+        } catch (error) {
+          console.error(error);
+          statusEl.textContent = error.message;
+          statusEl.style.color = '#f85149';
         }
-      }
-
-      function startPolling() {
-        pollNotifications();
-        setInterval(pollNotifications, 7000);
-      }
-
-      openButton.addEventListener('click', async () => {
-        const deliveryId = banner.dataset.deliveryId;
-        await fetch(`/api/push/${deliveryId}/opened`, { method: 'POST' });
-        banner.style.display = 'none';
       });
 
-      dismissButton.addEventListener('click', () => {
-        banner.style.display = 'none';
-      });
-
-      if (deviceToken) {
-        tokenBadge.textContent = `Token : ${deviceToken}`;
+      const existingToken = localStorage.getItem('deviceToken');
+      if (existingToken) {
+        tokenBadge.textContent = `Token : ${existingToken}`;
         tokenBadge.style.display = 'inline-flex';
-        statusEl.textContent = 'Session de notification rétablie. Les alertes arriveront automatiquement.';
-        startPolling();
+        statusEl.textContent = 'Session Web Push déjà active.';
       }
     </script>
   </body>
