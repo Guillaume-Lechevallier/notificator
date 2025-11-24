@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Notificator - Inscription</title>
+    <style>
+      :root {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background: #0d1117;
+        color: #e6edf3;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 720px;
+        padding: 48px 24px 96px;
+      }
+      h1, h2 {
+        margin-bottom: 8px;
+      }
+      .card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+        margin-bottom: 24px;
+      }
+      label {
+        display: block;
+        margin: 12px 0 6px;
+        font-weight: 600;
+      }
+      input, button {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid #30363d;
+        background: #0d1117;
+        color: #e6edf3;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      button {
+        background: linear-gradient(135deg, #238636, #2ea043);
+        border: none;
+        margin-top: 12px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 30px rgba(46, 160, 67, 0.25);
+      }
+      .status {
+        color: #7ee787;
+        font-weight: 600;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #238636;
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 14px;
+      }
+      .notification-banner {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 16px;
+        padding: 16px;
+        display: none;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+      }
+      .notification-banner h3 {
+        margin: 0 0 8px;
+      }
+      .notification-banner button {
+        width: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Inscrivez-vous aux notifications</h1>
+      <p>Activez le Web Push pour recevoir des alertes même lorsque l'onglet est fermé.</p>
+
+      <section class="card">
+        <h2>Votre session</h2>
+        <form id="subscribe-form">
+          <label for="label">Nom du commerce (facultatif)</label>
+          <input id="label" type="text" placeholder="boulangerie a" />
+          <button type="submit">Activer les notifications Web Push</button>
+        </form>
+        <p id="subscription-status" class="status"></p>
+        <div id="device-token" class="badge" style="display:none;"></div>
+      </section>
+
+      <section class="card">
+        <h2>Comment ça marche ?</h2>
+        <ul>
+          <li>Autorisez les notifications quand le navigateur vous le demande.</li>
+          <li>Un service worker s'occupe d'afficher les pop-ups même si la page est fermée.</li>
+          <li>Sur mobile, autorisez également les notifications système pour le navigateur.</li>
+        </ul>
+      </section>
+    </main>
+
+    <script>
+      const statusEl = document.getElementById('subscription-status');
+      const tokenBadge = document.getElementById('device-token');
+      const labelInput = document.getElementById('label');
+
+      function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      }
+
+      async function registerPush() {
+        if (!('serviceWorker' in navigator)) {
+          throw new Error('Service worker non supporté par ce navigateur.');
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          throw new Error("Les notifications ont été refusées.");
+        }
+
+        const registration = await navigator.serviceWorker.register('/sw.js');
+        const configResponse = await fetch('/api/config');
+        if (!configResponse.ok) {
+          throw new Error('Impossible de récupérer la clé publique VAPID.');
+        }
+        const { public_key: publicKey } = await configResponse.json();
+
+        const existing = await registration.pushManager.getSubscription();
+        const sub =
+          existing ||
+          (await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+          }));
+
+        const body = {
+          subscription: sub.toJSON(),
+          label: labelInput.value || null,
+          user_agent: navigator.userAgent,
+        };
+
+        const response = await fetch('/api/subscribers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          throw new Error("Impossible d'enregistrer l'abonnement côté serveur.");
+        }
+
+        const data = await response.json();
+        localStorage.setItem('deviceToken', data.device_token);
+        tokenBadge.textContent = `Token : ${data.device_token}`;
+        tokenBadge.style.display = 'inline-flex';
+      }
+
+      const subscribeForm = document.getElementById('subscribe-form');
+      subscribeForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        statusEl.textContent = 'Activation en cours...';
+        statusEl.style.color = '#7ee787';
+        try {
+          await registerPush();
+          statusEl.textContent = 'Inscription Web Push confirmée. Vous pouvez fermer la page.';
+        } catch (error) {
+          console.error(error);
+          statusEl.textContent = error.message;
+          statusEl.style.color = '#f85149';
+        }
+      });
+
+      const existingToken = localStorage.getItem('deviceToken');
+      if (existingToken) {
+        tokenBadge.textContent = `Token : ${existingToken}`;
+        tokenBadge.style.display = 'inline-flex';
+        statusEl.textContent = 'Session Web Push déjà active.';
+      }
+    </script>
+  </body>
+</html>
