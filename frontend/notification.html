@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Notification</title>
+    <style>
+      :root { font-family: 'Inter', system-ui, sans-serif; background: #0b1220; color: #e6edf3; }
+      body { display: grid; place-items: center; min-height: 100vh; margin: 0; }
+      .frame { background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; box-shadow: 0 16px 50px rgba(0,0,0,0.3); max-width: 90vw; }
+      img { max-width: 100%; border-radius: 12px; display: block; }
+      a { color: #38bdf8; display: inline-block; margin-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <img id="image" alt="Notification" />
+      <a id="cta" href="#" target="_blank" rel="noreferrer">Ouvrir le lien associé</a>
+    </div>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const imageUrl = params.get('image');
+      const targetUrl = params.get('target');
+      document.getElementById('image').src = imageUrl || '';
+      document.getElementById('cta').href = targetUrl || '#';
+    </script>
+  </body>
+</html>
