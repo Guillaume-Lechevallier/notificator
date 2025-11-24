@@ -86,6 +86,11 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 Le schéma MySQL est décrit dans `last_update.sql`. Si le modèle évolue, déplacer l'ancien contenu dans `last_update_old.sql` et mettre le nouveau SQL dans `last_update.sql`.
 
+### Mise à jour 2025-11-24
+
+- Une colonne `click_url` est désormais obligatoire pour enregistrer les liens de redirection des notifications.
+- Exécutez `last_update.sql` sur les bases existantes pour ajouter la colonne manquante et éviter l'erreur `Unknown column 'click_url' in 'field list'` observée lors de l'envoi des notifications.
+
 ## Agent
 
 Un fichier `AGENTS.md` n'existait pas à l'origine. Si vous ajoutez des règles de contribution ou des étapes de reprise après incident, créez/éditez `AGENTS.md` à la racine pour documenter les bonnes pratiques.

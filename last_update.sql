@@ -1,3 +1,7 @@
+-- Mise à jour pour garantir la présence de la colonne de redirection des notifications
+-- Appliquer ce script sur la base existante avant d'envoyer de nouvelles notifications.
+
+-- Crée les tables si elles n'existent pas déjà avec la bonne structure (installation fraîche)
 CREATE TABLE IF NOT EXISTS subscribers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     device_token VARCHAR(64) NOT NULL UNIQUE,
@@ -36,3 +40,7 @@ CREATE TABLE IF NOT EXISTS health_checks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Aligne les installations existantes qui auraient encore une colonne target_url
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS click_url TEXT NULL AFTER image_url;

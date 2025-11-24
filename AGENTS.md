@@ -10,3 +10,4 @@
 - Le frontend est servi par FastAPI via `StaticFiles`. Les pages principales : `index.html` (inscription) et `admin.html` (envoi des notifications).
 - Commande de démarrage locale : `uvicorn backend.main:app --host 0.0.0.0 --port 8000` après avoir installé les dépendances (`pip install -r requirements.txt`).
 - La pile Docker est définie par `docker-compose.yml` (services `db` et `app`).
+- Si l'API retourne `Unknown column 'click_url' in 'field list'`, exécuter le script `last_update.sql` (nouvelle colonne `click_url` dans `notifications`) après avoir archivé l'ancien fichier dans `last_update_old.sql`.
