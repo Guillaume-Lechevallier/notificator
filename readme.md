@@ -5,14 +5,18 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 ## Aperçu des dossiers
 
 - `backend/` : API FastAPI, modèles SQLAlchemy et configuration de la base de données.
-- `frontend/` : pages statiques (inscription et administration).
-- `admin.html` propose désormais une gestion des commerces (fiche détaillée + envoi ciblé).
-- Le formulaire d'envoi accepte des images téléversées localement : elles sont hébergées dans `frontend/uploads/` via `POST
-  /api/uploads`.
-- L'interface d'administration dispose d'un interrupteur clair/sombre. Le thème est retenu dans le navigateur et synchronisé
-  avec la page d'atterrissage (`notification.html`).
+- `frontend/` : pages statiques (inscription et administration) + service worker.
+- `admin.html` propose désormais une gestion des commerces (fiche détaillée + envoi ciblé) avec une console repensée (grilles, métriques et aperçu de la landing page).
+- `notification.html` reprend automatiquement le thème clair/sombre et met en avant les boutons « Appeler » et « Voir l'adresse ».
 - `last_update.sql` : script SQL à exécuter sur MySQL pour provisionner les tables (Web Push, abonnés, notifications, livraisons).
 - `docker-compose.yml` : lance MySQL et l'API sur le port 8000.
+
+## Nouveautés UI (2025-12-04)
+
+- Refonte complète du panneau d'administration : navigation par cartes, métriques de fiche commerce, éditeur de notification avec aperçu de la landing page et historique modernisé.
+- Page d'inscription modernisée : timeline d'onboarding, badge de token et callout mobile.
+- Landing page alignée visuellement (overlay, boutons mis en avant, synchronisation du thème clair/sombre avec l'admin).
+- Largeurs fluides (admin/index) pour éviter tout recadrage sur les écrans étroits et conserver le contenu dans le viewport.
 
 ## Prérequis
 
@@ -30,8 +34,18 @@ docker compose up --build
 L'API est disponible sur `http://localhost:8000` et sert aussi le frontend :
 
 - `http://localhost:8000/index.html` : inscription / réception
-- `http://localhost:8000/admin.html` : panneau d'administration (mode clair/sombre + génération automatique du lien de
-  destination)
+- `http://localhost:8000/admin.html` : panneau d'administration (mode clair/sombre + génération automatique du lien de destination)
+
+### Démarrage express (SQLite pour l'aperçu front/back)
+
+Pour tester rapidement le front ou réaliser une capture d'écran sans MySQL local :
+
+```bash
+export DATABASE_URL="sqlite:///./dev.db"
+uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
+
+Le script `last_update.sql` est ignoré en SQLite, mais les tables sont créées automatiquement via SQLAlchemy pour permettre la navigation.
 
 ### Clés VAPID préconfigurées (développement)
 
@@ -110,7 +124,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 ### Lien d'enrôlement pour un commerce
 
-- Depuis le panneau d'administration (`admin.html`), sélectionnez un commerce puis cliquez sur **« Générer un lien d'enrôlement »** dans le bloc *Informations enregistrées*.
+- Depuis le panneau d'administration (`admin.html`), sélectionnez un commerce puis cliquez sur **« Générer un lien d'enrôlement »** dans le bloc *Partager l'inscription*.
 - Le lien généré pointe vers `index.html` et inclut les paramètres `business_id` et `business_name` pour préremplir l'inscription et associer l'abonné au commerce.
 - Partagez ce lien avec le gérant : dès qu'il valide les notifications, l'abonnement est relié au commerce et l'ID est mis à jour côté administration.
 
@@ -122,14 +136,11 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 ### Page d'atterrissage enrichie (lien de destination)
 
-- Le lien de destination est généré automatiquement vers `notification.html` : le fond reprend l'image de la notification et
-  affiche le titre/contenu envoyés.
+- Le lien de destination est généré automatiquement vers `notification.html` : le fond reprend l'image de la notification et affiche le titre/contenu envoyés.
 - Deux options facultatives complètent la page :
   - **« Appeler »** : cochez la case puis renseignez le numéro à composer ; le bouton appelle `tel:+33...` sur la page.
-  - **« Voir l'adresse »** : cochez la case puis indiquez l'adresse complète ; le bouton ouvre Google Maps avec l'itinéraire
-    depuis la position actuelle vers cette destination.
-- Les paramètres sont transmis uniquement si les cases correspondantes sont cochées. Vous pouvez préremplir numéro et adresse en
-  sélectionnant un commerce : les champs reprennent les coordonnées stockées.
+  - **« Voir l'adresse »** : cochez la case puis indiquez l'adresse complète ; le bouton ouvre Google Maps avec l'itinéraire depuis la position actuelle vers cette destination.
+- Les paramètres sont transmis uniquement si les cases correspondantes sont cochées. Vous pouvez préremplir numéro et adresse en sélectionnant un commerce : les champs reprennent les coordonnées stockées.
 
 ## Flux fonctionnel
 
@@ -142,7 +153,6 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 - `GET /api/config` : renvoie la clé publique VAPID pour s'abonner.
 - `POST /api/subscribers` : enregistre un abonnement Web Push (payload `{ subscription, label?, user_agent?, business_id? }`). Le champ `business_id` associe automatiquement l'abonné au commerce ciblé.
-- `GET /api/subscribers` : liste les abonnés (nom + token) pour l'aperçu admin.
 - `GET /api/businesses` : liste les commerces et leurs coordonnées (nom, gérant, contact, adresse, abonné associé).
 - `POST /api/businesses` : crée un commerce.
 - `PUT /api/businesses/{id}` : met à jour un commerce existant.

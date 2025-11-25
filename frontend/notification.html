@@ -1,38 +1,40 @@
-<!doctype html>
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Page d'atterrissage</title>
+    <title>Notificator · Page d'atterrissage</title>
     <style>
       :root {
         font-family: 'Inter', system-ui, sans-serif;
-        background: var(--bg-color);
-        color: var(--text-color);
-        --bg-color: #0b1220;
-        --panel: rgba(15, 23, 42, 0.8);
-        --border: rgba(31, 41, 55, 0.8);
+        --bg: #04060d;
+        --panel: rgba(10, 15, 26, 0.92);
+        --border: rgba(255, 255, 255, 0.08);
         --muted: #cbd5e1;
         --accent: #f59e0b;
         --link: #38bdf8;
+        --text: #e5e7eb;
         color-scheme: dark;
       }
+
       body[data-theme='light'] {
-        --bg-color: #eef2f7;
-        --panel: rgba(255, 255, 255, 0.9);
-        --border: rgba(229, 231, 235, 0.9);
+        --bg: #eef2f7;
+        --panel: rgba(255, 255, 255, 0.94);
+        --border: rgba(0, 0, 0, 0.06);
         --muted: #475569;
-        --text-color: #0f172a;
+        --text: #0f172a;
         --link: #2563eb;
         color-scheme: light;
       }
+
       * { box-sizing: border-box; }
+
       body {
         min-height: 100vh;
         margin: 0;
-        background: var(--bg-color);
-        color: var(--text-color);
+        background: var(--bg);
+        color: var(--text);
       }
+
       .hero {
         position: relative;
         display: grid;
@@ -44,25 +46,78 @@
         background-position: center;
         background-repeat: no-repeat;
       }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.32), transparent 28%),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 100%);
+        pointer-events: none;
+      }
+
+      body[data-theme='light'] .overlay {
+        background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.64), transparent 30%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.65) 100%);
+      }
+
       .panel {
         position: relative;
         z-index: 1;
-        width: min(720px, 100%);
+        width: min(760px, 100%);
         background: var(--panel);
         border: 1px solid var(--border);
         border-radius: 18px;
         padding: 24px 20px;
-        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
         backdrop-filter: blur(8px);
       }
+
       .panel h1 { margin: 0 0 10px; }
-      .panel p { margin: 0 0 20px; color: var(--muted); }
+      .panel p { margin: 0 0 16px; color: var(--muted); }
+
       .actions { display: flex; gap: 12px; flex-wrap: wrap; }
-      .btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border); text-decoration: none; font-weight: 700; color: #0b1220; background: linear-gradient(135deg, #fbbf24, var(--accent)); box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3); }
-      .btn.secondary { background: var(--panel); color: var(--text-color); border: 1px solid var(--border); box-shadow: none; }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 18px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        text-decoration: none;
+        font-weight: 700;
+        color: #0b1220;
+        background: linear-gradient(135deg, #fbbf24, var(--accent));
+        box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3);
+      }
+
+      .btn.secondary {
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--border);
+        box-shadow: none;
+      }
+
       .muted { color: var(--muted); }
-      .topbar { position: fixed; top: 18px; right: 18px; z-index: 2; display: flex; gap: 10px; }
-      .toggle { border: 1px solid var(--border); background: var(--panel); color: var(--text-color); padding: 10px 14px; border-radius: 12px; cursor: pointer; }
+
+      .topbar {
+        position: fixed;
+        top: 18px;
+        right: 18px;
+        z-index: 2;
+        display: flex;
+        gap: 10px;
+      }
+
+      .toggle {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+
       @media (max-width: 540px) {
         .actions { flex-direction: column; align-items: stretch; }
         .btn { justify-content: center; width: 100%; }
@@ -74,6 +129,7 @@
       <button id="theme-toggle" class="toggle" type="button">🌙 Mode sombre</button>
     </div>
     <section class="hero" id="hero">
+      <div class="overlay"></div>
       <div class="panel">
         <h1 id="title">Votre notification</h1>
         <p id="body" class="muted">Merci d'avoir ouvert cette notification.</p>
@@ -102,6 +158,7 @@
       function toggleTheme() {
         const current = document.body.getAttribute('data-theme') || 'dark';
         applyTheme(current === 'dark' ? 'light' : 'dark');
+        hydrate();
       }
 
       const payload = {
@@ -147,7 +204,6 @@
 
       themeToggle.addEventListener('click', () => {
         toggleTheme();
-        hydrate();
       });
       applyTheme();
       hydrate();

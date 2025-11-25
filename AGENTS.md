@@ -28,3 +28,8 @@
 - L'upload d'images passe par `POST /api/uploads` (stockage dans `frontend/uploads/`). Le formulaire admin remplit automatiquement l'URL de l'image après téléversement ; éviter les hotlinks externes.
 - L'interface admin propose un thème clair/sombre (persisté via `localStorage`) partagé avec `notification.html`. Ne supprimez pas le sélecteur et privilégiez les variables CSS pour ajuster les couleurs.
 - Les liens de destination sont construits vers `notification.html` avec les paramètres `image`, `title`, `body` et, si les cases sont cochées côté administration, `call` (tel:...) et `address` (Google Maps itinéraire).
+
+- 2025-12-04 : Refonte front complète (admin/index/notification). Conserver les identifiants de formulaire/sections afin de garder la compatibilité avec le JS inline et les routes existantes.
+- Prévisualisation rapide sans MySQL : `DATABASE_URL=sqlite:///./dev.db uvicorn backend.main:app --host 0.0.0.0 --port 8000` (le script `last_update.sql` est ignoré en SQLite, utile pour les captures d'écran front).
+- Les pages admin/index partagent le même thème clair/sombre (clé `notificator-theme`) : toute évolution UI doit continuer à synchroniser ce stockage local avec `notification.html`.
+- 2025-12-05 : Le front admin/index utilise désormais une largeur fluide (`min(..., calc(100vw - 32px))`) pour éviter tout contenu rogné sur les petits écrans. Ne réintroduisez pas de valeurs fixes > viewport sans garde-fous (minmax + media queries).
