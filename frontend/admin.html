@@ -3,111 +3,374 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Notificator - Administration</title>
+    <title>Notificator · Administration</title>
     <style>
       :root {
-        font-family: 'Inter', system-ui, sans-serif;
-        background: var(--bg-color);
-        color: var(--text-color);
-        --bg-color: #0b1220;
-        --panel-color: #0f172a;
-        --panel-border: #1f2937;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        --bg: radial-gradient(circle at 10% 20%, rgba(67, 56, 202, 0.12), transparent 30%),
+          radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.12), transparent 28%),
+          #05070f;
+        --panel: #0c1220;
+        --panel-border: #1e2638;
         --muted: #9ca3af;
+        --text: #e5e7eb;
         --accent: #f59e0b;
-        --surface-contrast: #0b1220;
+        --positive: #34d399;
+        --negative: #f87171;
+        --surface: #0f172a;
+        --input: #0d1322;
         --link: #38bdf8;
         color-scheme: dark;
       }
+
       body[data-theme='light'] {
-        --bg-color: #f7f8fb;
-        --panel-color: #ffffff;
+        --bg: radial-gradient(circle at 5% 10%, rgba(59, 130, 246, 0.14), transparent 26%),
+          radial-gradient(circle at 90% 15%, rgba(16, 185, 129, 0.12), transparent 30%),
+          #f4f6fb;
+        --panel: #ffffff;
         --panel-border: #e5e7eb;
-        --surface-contrast: #f2f4f8;
         --muted: #4b5563;
-        --text-color: #0f172a;
+        --text: #0f172a;
+        --surface: #f8fafc;
+        --input: #f3f4f6;
         --link: #2563eb;
         color-scheme: light;
       }
-      body { margin: 0 auto; max-width: 1200px; padding: 32px 24px 96px; background: var(--bg-color); }
-      h1 { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
-      .title-group { display: flex; align-items: center; gap: 12px; }
-      .layout { display: grid; grid-template-columns: 320px 1fr; gap: 18px; align-items: start; }
-      .panel { background: var(--panel-color); border: 1px solid var(--panel-border); border-radius: 18px; padding: 24px; box-shadow: 0 12px 60px rgba(0,0,0,0.12); margin-bottom: 20px; }
-      label { display: block; font-weight: 600; margin: 12px 0 6px; }
-      input, textarea { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--panel-border); background: var(--surface-contrast); color: var(--text-color); font-size: 16px; box-sizing: border-box; }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        overflow-x: hidden;
+      }
+
+      .app-shell {
+        max-width: 1260px;
+        margin: 0 auto;
+        padding: 38px 28px 96px;
+      }
+
+      header.hero {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--panel-border);
+        width: fit-content;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 3vw, 36px);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .hero p { margin: 0; color: var(--muted); max-width: 840px; }
+
+      .hero-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--panel-border);
+        background: var(--surface);
+        color: var(--muted);
+      }
+
+      .toggle {
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--panel-border);
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+      }
+
+      .panel h2 {
+        margin: 0 0 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .panel p.meta { color: var(--muted); margin-top: 4px; margin-bottom: 0; }
+
+      .panel + .panel { margin-top: 16px; }
+
+      label {
+        display: block;
+        margin: 12px 0 6px;
+        font-weight: 600;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--panel-border);
+        background: var(--input);
+        color: var(--text);
+        font-size: 16px;
+      }
+
       textarea { min-height: 120px; resize: vertical; }
-      .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
-      button { border: none; border-radius: 12px; padding: 12px 18px; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; color: #0b1220; }
-      .primary { background: linear-gradient(135deg, #fbbf24, var(--accent)); box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3); }
-      .primary:hover { transform: translateY(-1px); }
-      .ghost { background: var(--surface-contrast); color: var(--muted); border: 1px solid var(--panel-border); }
-      .badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: var(--surface-contrast); border: 1px solid var(--panel-border); color: var(--muted); }
-      .list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-      .list li { background: var(--surface-contrast); border: 1px solid var(--panel-border); border-radius: 12px; padding: 16px; cursor: pointer; }
-      .list li.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.4); }
+
+      .stack { display: grid; gap: 16px; }
+
+      .list {
+        list-style: none;
+        padding: 0;
+        margin: 16px 0 12px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .list li {
+        padding: 14px;
+        border: 1px solid var(--panel-border);
+        border-radius: 12px;
+        background: var(--surface);
+        cursor: pointer;
+        transition: border-color 0.1s ease, transform 0.1s ease;
+      }
+
+      .list li:hover { border-color: var(--link); transform: translateY(-1px); }
+      .list li.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.45); }
       .list h3 { margin: 0 0 6px; }
       .meta { color: var(--muted); font-size: 14px; }
-      .bell { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-      .bell-icon { background: var(--accent); color: #111827; border-radius: 50%; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }
-      .preview { border: 1px dashed var(--panel-border); border-radius: 14px; min-height: 220px; display: grid; place-items: center; background: var(--surface-contrast); }
+
+      .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+      button {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+
+      button.primary {
+        background: linear-gradient(135deg, #fbbf24, var(--accent));
+        color: #0f172a;
+        box-shadow: 0 12px 30px rgba(251, 191, 36, 0.3);
+      }
+
+      button.ghost {
+        background: var(--surface);
+        color: var(--muted);
+        border: 1px solid var(--panel-border);
+      }
+
+      button:hover { transform: translateY(-1px); }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--surface);
+        border: 1px solid var(--panel-border);
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .badge.success { color: var(--positive); }
+      .badge.error { color: var(--negative); }
+
+      .business-summary {
+        display: grid;
+        gap: 6px;
+        padding: 14px;
+        border-radius: 12px;
+        background: var(--surface);
+        border: 1px dashed var(--panel-border);
+      }
+
+      .input-inline { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+      .preview {
+        border: 1px dashed var(--panel-border);
+        border-radius: 14px;
+        min-height: 220px;
+        display: grid;
+        place-items: center;
+        background: var(--surface);
+        padding: 10px;
+      }
+
       .preview img { max-width: 100%; max-height: 220px; border-radius: 12px; }
-      .sidebar { position: sticky; top: 24px; }
-      .input-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      .subtitle { color: var(--muted); margin-top: 0; }
-      a { color: var(--link); }
-      .full { width: 100%; text-align: center; }
-      .business-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-      .summary-card { background: var(--surface-contrast); border: 1px dashed var(--panel-border); border-radius: 12px; padding: 14px; min-height: 180px; }
-      .summary-card p { margin: 8px 0; }
-      .section-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-      .toggle { padding: 10px 14px; color: var(--text-color); background: var(--surface-contrast); border: 1px solid var(--panel-border); border-radius: 12px; cursor: pointer; }
-      .toggles { display: flex; align-items: center; gap: 10px; }
-      .checkbox { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-color); }
-      .link-preview { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 12px; border: 1px dashed var(--panel-border); background: var(--surface-contrast); }
+
+      .link-preview {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px dashed var(--panel-border);
+        border-radius: 12px;
+        background: var(--surface);
+      }
+
       .link-preview small { color: var(--muted); display: block; }
-      .link-preview a { word-break: break-all; font-weight: 600; }
-      @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } .business-grid { grid-template-columns: 1fr; } }
+      .link-preview a { word-break: break-all; font-weight: 600; color: var(--link); }
+
+      .history {
+        display: grid;
+        gap: 10px;
+      }
+
+      .history-card {
+        border: 1px solid var(--panel-border);
+        border-radius: 14px;
+        padding: 14px;
+        background: var(--surface);
+      }
+
+      .history-card h3 { margin: 0 0 4px; }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 8px 0;
+      }
+
+      .tag {
+        padding: 6px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--panel-border);
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .pill-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .metric {
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--surface);
+        border: 1px solid var(--panel-border);
+      }
+
+      @media (max-width: 1080px) { .grid { grid-template-columns: 1fr; } }
+      @media (max-width: 640px) {
+        .hero-actions { flex-direction: column; align-items: flex-start; }
+        .link-preview { flex-direction: column; align-items: flex-start; }
+        button { width: 100%; text-align: center; }
+      }
     </style>
   </head>
   <body>
-    <h1>
-      <span class="title-group"><span class="bell-icon">🔔</span> Panneau d'administration</span>
-      <div class="toggles">
-        <button id="theme-toggle" class="toggle" type="button">🌙 Mode sombre</button>
-      </div>
-    </h1>
-    <p>Publiez des notifications Web Push avec image et lien de redirection. Le service worker affichera la pop-up sur desktop et mobile.</p>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="eyebrow">🔔 Panneau d'administration</div>
+        <h1>Console Notificator</h1>
+        <p>
+          Gérez vos commerces, générez leurs liens d'enrôlement et envoyez des notifications Web Push ciblées.
+          Toutes les actions sont synchronisées avec le service worker pour un rendu identique sur desktop et mobile.
+        </p>
+        <div class="hero-actions">
+          <div class="pill">Mode clair/sombre synchronisé avec la page d'atterrissage</div>
+          <div class="pill">Enrôlement multi-commerces via lien dédié</div>
+          <button id="theme-toggle" class="toggle" type="button">🌙 Mode sombre</button>
+        </div>
+      </header>
 
-    <div class="layout">
-      <aside class="panel sidebar">
-        <h2>Commerces</h2>
-        <p class="subtitle">Sélectionnez un commerce pour afficher et modifier ses coordonnées.</p>
-        <input id="search" type="search" placeholder="rechercher" />
-        <ul class="list" id="businesses"></ul>
-        <button class="ghost full" id="add-business">+ Ajouter un commerce</button>
-      </aside>
-
-      <main>
-        <section class="panel">
-          <div class="section-header">
-            <h2 id="business-title">Fiche commerce</h2>
-            <span class="badge" id="business-status">Aucun commerce sélectionné</span>
-          </div>
-          <div class="business-grid">
+      <div class="grid">
+        <aside class="panel">
+          <div class="stack">
             <div>
-              <h3>Informations enregistrées</h3>
-              <div class="summary-card" id="business-summary">Choisissez un commerce pour afficher les informations existantes.</div>
-              <div class="actions">
-                <button class="ghost" id="generate-enrollment-link">🔗 Générer un lien d'enrôlement</button>
-                <button class="ghost" id="copy-enrollment-link">📋 Copier</button>
-              </div>
-              <input id="enrollment-link" type="url" placeholder="Lien d'inscription pour ce commerce" readonly />
-              <p class="meta" id="enrollment-hint">Sélectionnez un commerce pour créer un lien de partage.</p>
+              <h2>Commerces</h2>
+              <p class="meta">Filtrez, inspectez et rattachez un abonné push avant l'envoi ciblé.</p>
             </div>
-            <div>
-              <h3>Modifier ou ajouter</h3>
+            <input id="search" type="search" placeholder="Rechercher par nom, gérant ou téléphone" />
+            <ul class="list" id="businesses"></ul>
+            <button class="ghost" id="add-business">+ Ajouter un commerce</button>
+          </div>
+        </aside>
+
+        <main class="stack">
+          <section class="panel">
+            <div class="actions" style="justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+              <div>
+                <h2 id="business-title">Fiche commerce</h2>
+                <p class="meta">Sélectionnez une fiche pour charger les coordonnées et préremplir la notification.</p>
+              </div>
+              <span class="badge" id="business-status">Aucun commerce sélectionné</span>
+            </div>
+
+            <div class="pill-grid">
+              <div class="metric">
+                <strong>Coordonnées enregistrées</strong>
+                <div class="business-summary" id="business-summary">Choisissez un commerce pour afficher les informations existantes.</div>
+              </div>
+              <div class="metric">
+                <strong>Partager l'inscription</strong>
+                <p class="meta">Générez un lien unique pour lier un nouvel abonné à ce commerce.</p>
+                <div class="actions" style="margin-top: 8px;">
+                  <button class="ghost" id="generate-enrollment-link">🔗 Créer le lien</button>
+                  <button class="ghost" id="copy-enrollment-link">📋 Copier</button>
+                </div>
+                <input id="enrollment-link" type="url" placeholder="Lien d'inscription généré ici" readonly />
+                <p class="meta" id="enrollment-hint">Sélectionnez un commerce pour créer un lien de partage.</p>
+              </div>
+            </div>
+
+            <div class="stack" style="margin-top: 12px;">
+              <h3 style="margin: 0;">Modifier ou ajouter</h3>
               <label for="business-name">Nom du commerce</label>
               <input id="business-name" type="text" placeholder="Ex : Boulangerie des Halles" />
+
               <div class="input-inline">
                 <div>
                   <label for="manager-name">Nom du gérant</label>
@@ -118,72 +381,106 @@
                   <input id="business-phone" type="tel" placeholder="06 12 34 56 78" />
                 </div>
               </div>
-              <label for="business-email">Email</label>
-              <input id="business-email" type="email" placeholder="contact@commerce.fr" />
-              <label for="business-address">Adresse</label>
-              <input id="business-address" type="text" placeholder="12 rue des Lilas, 75000 Paris" />
+
+              <div class="input-inline">
+                <div>
+                  <label for="business-email">Email</label>
+                  <input id="business-email" type="email" placeholder="contact@commerce.fr" />
+                </div>
+                <div>
+                  <label for="business-address">Adresse</label>
+                  <input id="business-address" type="text" placeholder="12 rue des Lilas, 75000 Paris" />
+                </div>
+              </div>
+
               <label for="business-subscriber-id">ID abonné push (optionnel)</label>
               <input id="business-subscriber-id" type="number" placeholder="Associer un abonné existant" />
-              <div class="actions">
+
+              <div class="actions" style="margin-top: 6px;">
                 <button class="primary" id="save-business">Enregistrer le commerce</button>
                 <button class="ghost" id="reset-business">Réinitialiser</button>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section class="panel">
-          <h2>Composer une notification</h2>
-          <div class="input-inline">
-            <div>
-              <label for="title">Titre</label>
-              <input id="title" type="text" placeholder="Nouvelle offre" required />
+          <section class="panel">
+            <div class="actions" style="justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <div>
+                <h2>Composer une notification</h2>
+                <p class="meta">L'image est hébergée localement, le lien est généré automatiquement avec la page d'atterrissage.</p>
+              </div>
+              <span class="badge" id="status">Prêt</span>
             </div>
-            <div>
-              <label for="click-url">Lien de destination</label>
-              <input id="click-url" type="url" placeholder="https://votre-landing-page" />
-            </div>
-          </div>
-          <div class="input-inline">
-            <label class="checkbox" for="toggle-call"><input id="toggle-call" type="checkbox" /> Ajouter le bouton «&nbsp;Appeler&nbsp;»</label>
-            <label class="checkbox" for="toggle-map"><input id="toggle-map" type="checkbox" /> Ajouter le bouton «&nbsp;Voir l'adresse&nbsp;»</label>
-          </div>
-          <div class="input-inline">
-            <div>
-              <label for="call-number">Numéro à composer</label>
-              <input id="call-number" type="tel" placeholder="06 12 34 56 78" />
-            </div>
-            <div>
-              <label for="destination-address">Adresse pour l'itinéraire</label>
-              <input id="destination-address" type="text" placeholder="12 rue des Lilas, Paris" />
-            </div>
-          </div>
-          <label for="body">Contenu</label>
-          <textarea id="body" placeholder="Détail du message à afficher dans la pop-up"></textarea>
-          <label for="image-file">Image (téléversement recommandé)</label>
-          <input id="image-file" type="file" accept="image/*" />
-          <p class="meta" id="image-upload-status">L'image sera hébergée localement sur le serveur.</p>
-          <label for="image-url">URL de l'image (remplie automatiquement après envoi)</label>
-          <input id="image-url" type="url" placeholder="https://exemple.com/visuel.jpg" />
-          <div class="preview" id="image-preview">Prévisualisation de l'image</div>
-          <div class="link-preview">
-            <div>
-              <strong>Page d'atterrissage générée</strong>
-              <small>Fond = image, boutons dynamiques selon les cases cochées.</small>
-            </div>
-            <a id="landing-preview" href="#" target="_blank" rel="noreferrer">Ouvrir l'aperçu</a>
-          </div>
-          <div class="actions">
-            <button class="primary bell" id="send"><span>🔔</span> Envoyer / renvoyer la notification</button>
-            <span class="badge" id="status">Prêt</span>
-          </div>
-        </section>
 
-        <section class="panel">
-          <h2>Historique des notifications</h2>
-          <ul class="list" id="history"></ul>
-        </section>
-      </main>
+            <div class="input-inline">
+              <div>
+                <label for="title">Titre</label>
+                <input id="title" type="text" placeholder="Nouvelle offre" required />
+              </div>
+              <div>
+                <label for="click-url">Lien de destination</label>
+                <input id="click-url" type="url" placeholder="https://votre-landing-page" />
+              </div>
+            </div>
+
+            <div class="tags">
+              <label class="checkbox" for="toggle-call" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input id="toggle-call" type="checkbox" /> Ajouter le bouton « Appeler »
+              </label>
+              <label class="checkbox" for="toggle-map" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input id="toggle-map" type="checkbox" /> Ajouter le bouton « Voir l'adresse »
+              </label>
+            </div>
+
+            <div class="input-inline">
+              <div>
+                <label for="call-number">Numéro à composer</label>
+                <input id="call-number" type="tel" placeholder="06 12 34 56 78" />
+              </div>
+              <div>
+                <label for="destination-address">Adresse pour l'itinéraire</label>
+                <input id="destination-address" type="text" placeholder="12 rue des Lilas, Paris" />
+              </div>
+            </div>
+
+            <label for="body">Contenu</label>
+            <textarea id="body" placeholder="Détail du message à afficher dans la pop-up"></textarea>
+
+            <label for="image-file">Image (téléversement recommandé)</label>
+            <input id="image-file" type="file" accept="image/*" />
+            <p class="meta" id="image-upload-status">L'image sera hébergée localement sur le serveur.</p>
+
+            <label for="image-url">URL de l'image (remplie automatiquement après envoi)</label>
+            <input id="image-url" type="url" placeholder="https://exemple.com/visuel.jpg" />
+
+            <div class="preview" id="image-preview">Prévisualisation de l'image</div>
+
+            <div class="link-preview">
+              <div>
+                <strong>Page d'atterrissage générée</strong>
+                <small>Fond = image, boutons dynamiques selon les cases cochées.</small>
+              </div>
+              <a id="landing-preview" href="#" target="_blank" rel="noreferrer">Ouvrir l'aperçu</a>
+            </div>
+
+            <div class="actions" style="margin-top: 10px;">
+              <button class="primary" id="send" style="display:flex; align-items:center; gap:8px;">🔔 Envoyer / renvoyer</button>
+              <span class="badge">La notification est envoyée à tous les abonnés ou au commerce sélectionné.</span>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="actions" style="justify-content: space-between; align-items: center;">
+              <div>
+                <h2>Historique des notifications</h2>
+                <p class="meta">Suivez les derniers envois et ouvrez la landing page associée.</p>
+              </div>
+              <span class="badge">Derniers événements</span>
+            </div>
+            <div class="history" id="history"></div>
+          </section>
+        </main>
+      </div>
     </div>
 
     <script>
@@ -241,6 +538,7 @@
         const current = document.body.getAttribute('data-theme') || 'dark';
         const next = current === 'dark' ? 'light' : 'dark';
         applyTheme(next);
+        syncLandingLink();
       }
 
       function renderPreview() {
@@ -359,6 +657,12 @@
 
       function renderBusinessList(items) {
         businessList.innerHTML = '';
+        if (!items.length) {
+          const empty = document.createElement('li');
+          empty.innerHTML = '<div class="meta">Aucun commerce trouvé.</div>';
+          businessList.appendChild(empty);
+          return;
+        }
         items.forEach((business) => {
           const li = document.createElement('li');
           li.dataset.id = business.id;
@@ -374,11 +678,12 @@
 
       function filterBusinesses() {
         const query = search.value.toLowerCase();
-        const filtered = businesses.filter((b) =>
-          !query ||
-          b.name.toLowerCase().includes(query) ||
-          (b.manager_name && b.manager_name.toLowerCase().includes(query)) ||
-          (b.phone && b.phone.toLowerCase().includes(query))
+        const filtered = businesses.filter(
+          (b) =>
+            !query ||
+            b.name.toLowerCase().includes(query) ||
+            (b.manager_name && b.manager_name.toLowerCase().includes(query)) ||
+            (b.phone && b.phone.toLowerCase().includes(query))
         );
         renderBusinessList(filtered);
       }
@@ -395,7 +700,7 @@
         }
 
         renderEnrollmentLink(business);
-        businessStatus.textContent = 'Lien d\'enrôlement généré pour ce commerce';
+        businessStatus.textContent = "Lien d'enrôlement généré pour ce commerce";
         businessStatus.style.color = '#34d399';
       }
 
@@ -434,7 +739,7 @@
 
       function resetBusinessForm() {
         selectedBusinessId = null;
-        businessTitle.textContent = 'Nouveau commerce';
+        businessTitle.textContent = 'Fiche commerce';
         businessStatus.textContent = 'Aucun commerce sélectionné';
         businessStatus.style.color = '#9ca3af';
         populateBusinessForm(null);
@@ -452,6 +757,7 @@
         selectedBusinessId = business.id;
         businessTitle.textContent = `Fiche commerce · ${business.name}`;
         businessStatus.textContent = 'Prêt pour modification ou envoi';
+        businessStatus.style.color = '#34d399';
         populateBusinessForm(business);
         renderBusinessSummary(business);
         renderEnrollmentLink(business);
@@ -471,6 +777,7 @@
 
         if (!payload.name) {
           businessStatus.textContent = 'Le nom du commerce est requis';
+          businessStatus.style.color = '#f87171';
           return;
         }
 
@@ -502,12 +809,17 @@
         if (!response.ok) return;
         const items = await response.json();
         history.innerHTML = '';
+        if (!items.length) {
+          history.innerHTML = '<div class="meta">Aucune notification envoyée pour le moment.</div>';
+          return;
+        }
         items.forEach((item) => {
-          const li = document.createElement('li');
+          const li = document.createElement('div');
+          li.className = 'history-card';
           li.innerHTML = `
             <h3>${item.title}</h3>
             <div class="meta">${new Date(item.created_at).toLocaleString()}</div>
-            ${item.business ? `<div class="meta">Commerce : ${item.business.name}</div>` : ''}
+            ${item.business ? `<div class="tag">Commerce : ${item.business.name}</div>` : ''}
             <div>${item.body || 'Pas de message'}</div>
             ${item.image_url ? `<div style="margin-top:8px;"><img src="${item.image_url}" alt="visuel" style="max-width:100%; border-radius:10px;" /></div>` : ''}
             ${item.click_url ? `<div class="meta">Lien : <a href="${item.click_url}" target="_blank" rel="noreferrer">${item.click_url}</a></div>` : ''}
@@ -524,7 +836,7 @@
 
         const targetBusiness = businesses.find((b) => b.id === selectedBusinessId);
         if (selectedBusinessId && targetBusiness && !targetBusiness.subscriber_id) {
-          status.textContent = 'Associez un abonné push à ce commerce avant l\'envoi';
+          status.textContent = "Associez un abonné push à ce commerce avant l'envoi";
           status.style.color = '#f87171';
           return;
         }
