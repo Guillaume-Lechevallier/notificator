@@ -1,6 +1,5 @@
--- Mise à jour 2025-11-27 : alignement conditionnel MySQL (sans syntaxe IF NOT EXISTS)
--- Appliquer ce script après sauvegarde des données existantes. Idempotent : chaque opération vérifie la présence
--- préalable des colonnes/index/contraintes avant d'exécuter l'ALTER correspondant.
+-- Mise à jour 2025-11-28 : nettoyage des abonnés invalides avant l'index d'unicité sur endpoint
+-- Idempotent et compatible MySQL 8.0 (ALTER conditionnels via PREPARE/EXECUTE)
 
 -- Tables de base (installation fraîche)
 CREATE TABLE IF NOT EXISTS subscribers (
@@ -128,6 +127,14 @@ SET @sql := (
     )
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Nettoyage des endpoints invalides avant création de l'index unique
+DELETE FROM subscribers WHERE endpoint IS NULL OR TRIM(endpoint) = '';
+
+-- Suppression des doublons d'endpoint en conservant le premier enregistrement
+DELETE s1 FROM subscribers s1
+JOIN subscribers s2 ON s1.endpoint = s2.endpoint
+WHERE s1.id > s2.id AND s1.endpoint IS NOT NULL AND TRIM(s1.endpoint) <> '';
 
 -- Index d'unicité sur endpoint
 SET @sql := (
