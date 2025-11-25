@@ -21,6 +21,8 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 docker compose up --build
 ```
 
+> Lors du démarrage, l'API applique automatiquement le contenu de `last_update.sql` sur MySQL pour aligner le schéma (colonnes Web Push, `label`, commerces, etc.). Le fichier est idempotent : il peut être exécuté plusieurs fois et garantit que la base correspond aux modèles actuels.
+
 L'API est disponible sur `http://localhost:8000` et sert aussi le frontend :
 
 - `http://localhost:8000/index.html` : inscription / réception
@@ -115,6 +117,8 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 Le schéma MySQL est décrit dans `last_update.sql`. Si le modèle évolue, déplacer l'ancien contenu dans `last_update_old.sql` et mettre le nouveau SQL dans `last_update.sql`.
 
+L'API exécute automatiquement `last_update.sql` au démarrage pour les déploiements MySQL. Cette étape permet notamment d'ajouter la colonne `label` sur `subscribers` et de conserver les index d'unicité nécessaires pour éviter l'erreur `Unknown column 'subscribers.label' in 'field list'` lors de l'inscription. Si vous utilisez SQLite en développement, cette étape est ignorée pour rester compatible avec la syntaxe MySQL du script.
+
 ### Mise à jour 2025-11-25
 
 - Ajout de la table `businesses` (nom, gérant, téléphone, email, adresse, abonné associé) pour stocker les commerces.
@@ -123,9 +127,15 @@ Le schéma MySQL est décrit dans `last_update.sql`. Si le modèle évolue, dép
 
 ### Mise à jour 2025-11-26
 
-- Ajout d'une migration de rattrapage pour la colonne optionnelle `label` de la table `subscribers` (nécessaire pour éviter l'erreur `Unknown column 'subscribers.label' in 'field list'` lors de l'inscription). 
+- Ajout d'une migration de rattrapage pour la colonne optionnelle `label` de la table `subscribers` (nécessaire pour éviter l'erreur `Unknown column 'subscribers.label' in 'field list'` lors de l'inscription).
 - Le script `last_update.sql` aligne désormais la table `subscribers` (colonnes Web Push et index d'unicité sur `endpoint`) en plus des colonnes `click_url` et `business_id`.
 - Exécutez `last_update.sql` sur toute base créée avant cette date après avoir archivé l'ancienne version dans `last_update_old.sql`.
+
+### Mise à jour 2025-11-27
+
+- Réécriture des instructions d'alignement MySQL pour éviter l'erreur de syntaxe `ADD COLUMN IF NOT EXISTS` observée au démarrage du conteneur.
+- Les ajouts de colonnes, d'index et de clés étrangères sont désormais appliqués via des blocs préparés (`SET @sql := IF(...); PREPARE stmt FROM @sql; EXECUTE stmt;`) qui vérifient l'existence de chaque élément avant d'exécuter l'ALTER.
+- Si vous voyez une erreur `You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'IF NOT EXISTS label'`, rejouez `last_update.sql` après avoir archivé l'ancienne version dans `last_update_old.sql`.
 
 ### Mise à jour 2025-11-24
 
