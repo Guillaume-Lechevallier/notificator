@@ -149,3 +149,71 @@ CREATE TABLE IF NOT EXISTS health_checks (
 -- Aligne les installations existantes qui auraient encore une colonne target_url
 ALTER TABLE notifications
     ADD COLUMN IF NOT EXISTS click_url TEXT NULL AFTER image_url;
+
+-- Archived on 2025-11-26: businesses and targeted notifications schema snapshot
+-- Mise à jour pour la gestion des commerces et des envois ciblés
+-- Appliquer ce script après sauvegarde des données existantes.
+
+-- Tables de base (installation fraîche)
+CREATE TABLE IF NOT EXISTS subscribers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    device_token VARCHAR(64) NOT NULL UNIQUE,
+    label VARCHAR(120) NULL,
+    endpoint TEXT NOT NULL,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    user_agent VARCHAR(255) NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_subscriber_endpoint (endpoint(255))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS businesses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    manager_name VARCHAR(255) NULL,
+    phone VARCHAR(50) NULL,
+    email VARCHAR(255) NULL,
+    address VARCHAR(255) NULL,
+    subscriber_id INT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_business_subscriber FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    body TEXT NULL,
+    image_url TEXT NULL,
+    click_url TEXT NULL,
+    business_id INT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notification_business FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS deliveries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    notification_id INT NOT NULL,
+    subscriber_id INT NOT NULL,
+    status VARCHAR(32) DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    delivered_at DATETIME NULL,
+    opened_at DATETIME NULL,
+    CONSTRAINT fk_delivery_notification FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE CASCADE,
+    CONSTRAINT fk_delivery_subscriber FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE CASCADE,
+    CONSTRAINT uq_delivery_notification_subscriber UNIQUE (notification_id, subscriber_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS health_checks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Alignement des installations existantes
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS click_url TEXT NULL AFTER image_url,
+    ADD COLUMN IF NOT EXISTS business_id INT NULL AFTER click_url,
+    ADD CONSTRAINT IF NOT EXISTS fk_notification_business FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL;
+
+ALTER TABLE businesses
+    ADD CONSTRAINT IF NOT EXISTS fk_business_subscriber FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE SET NULL;

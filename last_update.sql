@@ -1,4 +1,4 @@
--- Mise à jour pour la gestion des commerces et des envois ciblés
+-- Mise à jour 2025-11-26 : aligner la table des abonnés Web Push (colonne label) et conserver la gestion des commerces
 -- Appliquer ce script après sauvegarde des données existantes.
 
 -- Tables de base (installation fraîche)
@@ -57,9 +57,20 @@ CREATE TABLE IF NOT EXISTS health_checks (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Alignement des installations existantes
+ALTER TABLE subscribers
+    ADD COLUMN IF NOT EXISTS label VARCHAR(120) NULL AFTER device_token,
+    ADD COLUMN IF NOT EXISTS endpoint TEXT NOT NULL AFTER label,
+    ADD COLUMN IF NOT EXISTS p256dh TEXT NOT NULL AFTER endpoint,
+    ADD COLUMN IF NOT EXISTS auth TEXT NOT NULL AFTER p256dh,
+    ADD COLUMN IF NOT EXISTS user_agent VARCHAR(255) NULL AFTER auth,
+    ADD COLUMN IF NOT EXISTS created_at DATETIME DEFAULT CURRENT_TIMESTAMP AFTER user_agent,
+    MODIFY COLUMN device_token VARCHAR(64) NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_subscriber_endpoint ON subscribers (endpoint(255));
+
 ALTER TABLE notifications
     ADD COLUMN IF NOT EXISTS click_url TEXT NULL AFTER image_url,
-    ADD COLUMN IF NOT EXISTS business_id INT NULL AFTER click_url,
+    ADD COLUMN IF NOT EXISTS business_id INT NULL AFTER click_url;
+ALTER TABLE notifications
     ADD CONSTRAINT IF NOT EXISTS fk_notification_business FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL;
 
 ALTER TABLE businesses
