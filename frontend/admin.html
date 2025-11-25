@@ -48,9 +48,9 @@
       }
 
       .app-shell {
-        max-width: 1260px;
+        width: min(1240px, calc(100vw - 32px));
         margin: 0 auto;
-        padding: 38px 28px 96px;
+        padding: clamp(28px, 4vw, 38px) clamp(18px, 3vw, 28px) 96px;
       }
 
       header.hero {
@@ -112,7 +112,7 @@
 
       .grid {
         display: grid;
-        grid-template-columns: 320px 1fr;
+        grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
         gap: 18px;
         align-items: start;
       }
@@ -230,7 +230,15 @@
         border: 1px dashed var(--panel-border);
       }
 
-      .input-inline { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      .input-inline {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+
+      .input-inline > div {
+        min-width: 0;
+      }
 
       .preview {
         border: 1px dashed var(--panel-border);
@@ -302,7 +310,7 @@
         border: 1px solid var(--panel-border);
       }
 
-      @media (max-width: 1080px) { .grid { grid-template-columns: 1fr; } }
+      @media (max-width: 1180px) { .grid { grid-template-columns: 1fr; } }
       @media (max-width: 640px) {
         .hero-actions { flex-direction: column; align-items: flex-start; }
         .link-preview { flex-direction: column; align-items: flex-start; }

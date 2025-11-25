@@ -32,3 +32,4 @@
 - 2025-12-04 : Refonte front complète (admin/index/notification). Conserver les identifiants de formulaire/sections afin de garder la compatibilité avec le JS inline et les routes existantes.
 - Prévisualisation rapide sans MySQL : `DATABASE_URL=sqlite:///./dev.db uvicorn backend.main:app --host 0.0.0.0 --port 8000` (le script `last_update.sql` est ignoré en SQLite, utile pour les captures d'écran front).
 - Les pages admin/index partagent le même thème clair/sombre (clé `notificator-theme`) : toute évolution UI doit continuer à synchroniser ce stockage local avec `notification.html`.
+- 2025-12-05 : Le front admin/index utilise désormais une largeur fluide (`min(..., calc(100vw - 32px))`) pour éviter tout contenu rogné sur les petits écrans. Ne réintroduisez pas de valeurs fixes > viewport sans garde-fous (minmax + media queries).

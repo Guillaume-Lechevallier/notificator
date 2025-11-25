@@ -16,6 +16,7 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - Refonte complète du panneau d'administration : navigation par cartes, métriques de fiche commerce, éditeur de notification avec aperçu de la landing page et historique modernisé.
 - Page d'inscription modernisée : timeline d'onboarding, badge de token et callout mobile.
 - Landing page alignée visuellement (overlay, boutons mis en avant, synchronisation du thème clair/sombre avec l'admin).
+- Largeurs fluides (admin/index) pour éviter tout recadrage sur les écrans étroits et conserver le contenu dans le viewport.
 
 ## Prérequis
 

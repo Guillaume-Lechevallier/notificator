@@ -28,9 +28,9 @@
       }
 
       .page {
-        max-width: 960px;
+        width: min(960px, calc(100vw - 32px));
         margin: 0 auto;
-        padding: 48px 22px 96px;
+        padding: clamp(32px, 4vw, 48px) clamp(18px, 3vw, 22px) 96px;
         display: grid;
         gap: 16px;
       }
