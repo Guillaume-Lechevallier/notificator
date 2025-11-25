@@ -127,9 +127,15 @@ L'API exécute automatiquement `last_update.sql` au démarrage pour les déploie
 
 ### Mise à jour 2025-11-26
 
-- Ajout d'une migration de rattrapage pour la colonne optionnelle `label` de la table `subscribers` (nécessaire pour éviter l'erreur `Unknown column 'subscribers.label' in 'field list'` lors de l'inscription). 
+- Ajout d'une migration de rattrapage pour la colonne optionnelle `label` de la table `subscribers` (nécessaire pour éviter l'erreur `Unknown column 'subscribers.label' in 'field list'` lors de l'inscription).
 - Le script `last_update.sql` aligne désormais la table `subscribers` (colonnes Web Push et index d'unicité sur `endpoint`) en plus des colonnes `click_url` et `business_id`.
 - Exécutez `last_update.sql` sur toute base créée avant cette date après avoir archivé l'ancienne version dans `last_update_old.sql`.
+
+### Mise à jour 2025-11-27
+
+- Réécriture des instructions d'alignement MySQL pour éviter l'erreur de syntaxe `ADD COLUMN IF NOT EXISTS` observée au démarrage du conteneur.
+- Les ajouts de colonnes, d'index et de clés étrangères sont désormais appliqués via des instructions séparées compatibles MySQL 8.0 (`DROP ... IF EXISTS` puis `ADD ...`).
+- Si vous voyez une erreur `You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'IF NOT EXISTS label'`, rejouez `last_update.sql` après avoir archivé l'ancienne version dans `last_update_old.sql`.
 
 ### Mise à jour 2025-11-24
 
