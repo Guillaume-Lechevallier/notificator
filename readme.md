@@ -61,8 +61,12 @@ public_bytes = vapid.public_key.public_bytes(
     format=serialization.PublicFormat.UncompressedPoint,
 )
 
-print('VAPID_PRIVATE_KEY=', b64urlencode(private_bytes).decode())
-print('VAPID_PUBLIC_KEY=', b64urlencode(public_bytes).decode())
+def b64urlencode_text(data: bytes) -> str:
+    encoded = b64urlencode(data)
+    return encoded if isinstance(encoded, str) else encoded.decode()
+
+print('VAPID_PRIVATE_KEY=', b64urlencode_text(private_bytes))
+print('VAPID_PUBLIC_KEY=', b64urlencode_text(public_bytes))
 PY
 
 export VAPID_PUBLIC_KEY="<clé publique>"

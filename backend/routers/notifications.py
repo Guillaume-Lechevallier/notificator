@@ -62,6 +62,10 @@ def _generate_vapid_keys() -> dict[str, str]:
 
     claim = os.getenv("VAPID_CLAIM_EMAIL", DEFAULT_VAPID_CLAIM)
 
+    def _b64urlencode_bytes(data: bytes) -> str:
+        encoded = b64urlencode(data)
+        return encoded if isinstance(encoded, str) else encoded.decode()
+
     private_value = vapid.private_key.private_numbers().private_value
     private_bytes = private_value.to_bytes(32, byteorder="big")
     public_bytes = vapid.public_key.public_bytes(
@@ -69,8 +73,8 @@ def _generate_vapid_keys() -> dict[str, str]:
         format=serialization.PublicFormat.UncompressedPoint,
     )
 
-    private = b64urlencode(private_bytes).decode()
-    public = b64urlencode(public_bytes).decode()
+    private = _b64urlencode_bytes(private_bytes)
+    public = _b64urlencode_bytes(public_bytes)
 
     keys = {"public": public, "private": private, "claim": claim}
     _persist_vapid_keys(keys)
