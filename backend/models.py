@@ -13,14 +13,14 @@ class Subscriber(Base):
     id = Column(Integer, primary_key=True, index=True)
     device_token = Column(String(64), unique=True, index=True, default=lambda: uuid.uuid4().hex)
     label = Column(String(120), nullable=True)
-    endpoint = Column(Text, unique=True, nullable=False)
+    endpoint = Column(Text, nullable=False, index=True)
     p256dh = Column(Text, nullable=False)
     auth = Column(Text, nullable=False)
     user_agent = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     deliveries = relationship("Delivery", back_populates="subscriber", cascade="all, delete-orphan")
-    business = relationship("Business", back_populates="subscriber", uselist=False)
+    businesses = relationship("Business", back_populates="subscriber")
 
 
 class Notification(Base):
@@ -51,7 +51,7 @@ class Business(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    subscriber = relationship("Subscriber", back_populates="business")
+    subscriber = relationship("Subscriber", back_populates="businesses")
     notifications = relationship("Notification", back_populates="business")
 
 

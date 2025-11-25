@@ -1,10 +1,12 @@
 import json
 import os
+import shutil
 from pathlib import Path
 from datetime import datetime
 from uuid import uuid4
+import mimetypes
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -18,6 +20,9 @@ router = APIRouter(prefix="/api", tags=["notifications"])
 
 DEFAULT_VAPID_CLAIM = "mailto:moilechevallier@gmail.com"
 VAPID_STORE = Path(__file__).resolve().parent.parent / ".vapid_keys.json"
+BASE_DIR = Path(__file__).resolve().parents[2]
+UPLOAD_DIR = BASE_DIR / "frontend" / "uploads"
+ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
 
 
 def _load_vapid_from_env() -> dict[str, str] | None:
@@ -121,6 +126,28 @@ def get_public_config():
     return {"public_key": vapid["public"]}
 
 
+@router.post("/uploads", response_model=schemas.UploadResponse)
+def upload_image(file: UploadFile = File(...)):
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Format d'image non supporté")
+
+    suffix = Path(file.filename or "").suffix
+    if not suffix:
+        guessed = mimetypes.guess_extension(file.content_type or "")
+        suffix = guessed or ""
+
+    filename = f"{uuid4().hex}{suffix}"
+    try:
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        destination = UPLOAD_DIR / filename
+        with destination.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except OSError:
+        raise HTTPException(status_code=500, detail="Impossible d'enregistrer l'image envoyée")
+
+    return {"url": f"/uploads/{filename}"}
+
+
 @router.post("/subscribers", response_model=schemas.SubscriberResponse)
 def register_subscriber(payload: schemas.SubscriberCreate, db: Session = Depends(get_db)):
     subscription = payload.subscription
@@ -140,11 +167,16 @@ def register_subscriber(payload: schemas.SubscriberCreate, db: Session = Depends
         .first()
     )
 
-    if existing:
+    if existing and payload.business_id is None:
         existing.label = payload.label or existing.label
         existing.user_agent = payload.user_agent or existing.user_agent
-        if business:
-            business.subscriber = existing
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    if existing and business and business.subscriber_id == existing.id:
+        existing.label = payload.label or existing.label
+        existing.user_agent = payload.user_agent or existing.user_agent
         db.commit()
         db.refresh(existing)
         return existing

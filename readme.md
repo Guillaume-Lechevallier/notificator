@@ -7,6 +7,8 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - `backend/` : API FastAPI, modèles SQLAlchemy et configuration de la base de données.
 - `frontend/` : pages statiques (inscription et administration).
 - `admin.html` propose désormais une gestion des commerces (fiche détaillée + envoi ciblé).
+- Le formulaire d'envoi accepte des images téléversées localement : elles sont hébergées dans `frontend/uploads/` via `POST
+  /api/uploads`.
 - `last_update.sql` : script SQL à exécuter sur MySQL pour provisionner les tables (Web Push, abonnés, notifications, livraisons).
 - `docker-compose.yml` : lance MySQL et l'API sur le port 8000.
 
@@ -109,6 +111,12 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 - Le lien généré pointe vers `index.html` et inclut les paramètres `business_id` et `business_name` pour préremplir l'inscription et associer l'abonné au commerce.
 - Partagez ce lien avec le gérant : dès qu'il valide les notifications, l'abonnement est relié au commerce et l'ID est mis à jour côté administration.
 
+### Téléverser une image pour une notification
+
+- Depuis `admin.html`, ajoutez une image via le champ « Image (téléversement recommandé) » : le fichier est envoyé en `POST` sur `/api/uploads` et l'URL relative est remplie automatiquement dans le champ « URL de l'image ».
+- Les fichiers sont stockés dans `frontend/uploads/` et servis par FastAPI en statique (aucun hotlinking externe nécessaire).
+- Si besoin, une URL d'image déjà en ligne peut toujours être saisie manuellement.
+
 ## Flux fonctionnel
 
 1. Un utilisateur s'inscrit via la page `index.html` : le navigateur enregistre un abonnement Web Push et l'envoie à `/api/subscribers`.
@@ -163,6 +171,11 @@ L'API exécute automatiquement `last_update.sql` au démarrage pour les déploie
 - Le script gère désormais les bases MySQL historiques contenant encore une colonne obligatoire `target_url` sur `notifications`.
 - Lors de l'alignement, la colonne est rendue facultative, ses valeurs sont copiées dans `click_url` si besoin puis la colonne obsolète est supprimée.
 - Cette étape corrige l'erreur `Field 'target_url' doesn't have a default value` observée lors de l'envoi de notifications sur des bases non migrées.
+
+### Mise à jour 2025-11-30
+
+- L'unicité sur `subscribers.endpoint` est supprimée afin de permettre plusieurs inscriptions pour un même navigateur (plusieurs liens d'inscription / commerces). Un index non unique est conservé pour les recherches.
+- `POST /api/subscribers` accepte désormais plusieurs enregistrements par endpoint : chaque commerce peut donc être enrôlé avec le même navigateur sans blocage.
 
 ### Mise à jour 2025-11-24
 
