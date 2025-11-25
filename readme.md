@@ -47,16 +47,31 @@ export DATABASE_URL="mysql+mysqlconnector://notificator:notificator@localhost:33
 
 ```bash
 python - <<'PY'
-from pywebpush import generate_vapid_key
-private, public = generate_vapid_key()
-print('VAPID_PRIVATE_KEY=', private)
-print('VAPID_PUBLIC_KEY=', public)
+from cryptography.hazmat.primitives import serialization
+from py_vapid import b64urlencode
+from pywebpush import Vapid
+
+vapid = Vapid()
+vapid.generate_keys()
+
+private_value = vapid.private_key.private_numbers().private_value
+private_bytes = private_value.to_bytes(32, byteorder="big")
+public_bytes = vapid.public_key.public_bytes(
+    encoding=serialization.Encoding.X962,
+    format=serialization.PublicFormat.UncompressedPoint,
+)
+
+print('VAPID_PRIVATE_KEY=', b64urlencode(private_bytes).decode())
+print('VAPID_PUBLIC_KEY=', b64urlencode(public_bytes).decode())
 PY
 
 export VAPID_PUBLIC_KEY="<clé publique>"
 export VAPID_PRIVATE_KEY="<clé privée>"
 export VAPID_CLAIM_EMAIL="mailto:admin@example.com"
 ```
+
+> À défaut de variables d'environnement, l'API génère automatiquement un jeu de clés de développement et le conserve dans
+> `backend/.vapid_keys.json`. Définissez vos propres clés VAPID en production pour garantir la continuité des abonnements.
 
 5. Lancez l'API :
 

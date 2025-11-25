@@ -2,5 +2,6 @@ __pycache__/
 *.pyc
 .dev.db
 dev.db
+.vapid_keys.json
 .env
 .venv/

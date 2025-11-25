@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 from datetime import datetime
 from uuid import uuid4
 
@@ -8,20 +9,81 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..database import get_db
-from pywebpush import WebPushException, webpush
+from cryptography.hazmat.primitives import serialization
+from py_vapid import b64urlencode
+from pywebpush import Vapid, WebPushException, webpush
 
 router = APIRouter(prefix="/api", tags=["notifications"])
 
 
-def _get_vapid_settings():
+DEFAULT_VAPID_CLAIM = "mailto:admin@example.com"
+VAPID_STORE = Path(__file__).resolve().parent.parent / ".vapid_keys.json"
+
+
+def _load_vapid_from_env() -> dict[str, str] | None:
     public = os.getenv("VAPID_PUBLIC_KEY")
     private = os.getenv("VAPID_PRIVATE_KEY")
-    claim = os.getenv("VAPID_CLAIM_EMAIL", "mailto:admin@example.com")
+    claim = os.getenv("VAPID_CLAIM_EMAIL", DEFAULT_VAPID_CLAIM)
 
-    if not public or not private:
-        raise HTTPException(status_code=500, detail="Les clefs VAPID ne sont pas configurées")
+    if public and private:
+        return {"public": public, "private": private, "claim": claim}
+    return None
 
-    return {"public": public, "private": private, "claim": claim}
+
+def _load_vapid_from_file() -> dict[str, str] | None:
+    if not VAPID_STORE.exists():
+        return None
+
+    try:
+        data = json.loads(VAPID_STORE.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    public = data.get("public")
+    private = data.get("private")
+    claim = data.get("claim", DEFAULT_VAPID_CLAIM)
+
+    if public and private:
+        return {"public": public, "private": private, "claim": claim}
+    return None
+
+
+def _persist_vapid_keys(keys: dict[str, str]) -> None:
+    try:
+        VAPID_STORE.write_text(json.dumps(keys, indent=2))
+    except OSError:
+        # In read-only environments, fall back to in-memory values only.
+        pass
+
+
+def _generate_vapid_keys() -> dict[str, str]:
+    vapid = Vapid()
+    vapid.generate_keys()
+
+    claim = os.getenv("VAPID_CLAIM_EMAIL", DEFAULT_VAPID_CLAIM)
+
+    private_value = vapid.private_key.private_numbers().private_value
+    private_bytes = private_value.to_bytes(32, byteorder="big")
+    public_bytes = vapid.public_key.public_bytes(
+        encoding=serialization.Encoding.X962,
+        format=serialization.PublicFormat.UncompressedPoint,
+    )
+
+    private = b64urlencode(private_bytes).decode()
+    public = b64urlencode(public_bytes).decode()
+
+    keys = {"public": public, "private": private, "claim": claim}
+    _persist_vapid_keys(keys)
+    return keys
+
+
+def _get_vapid_settings():
+    vapid = _load_vapid_from_env() or _load_vapid_from_file()
+
+    if vapid:
+        return vapid
+
+    return _generate_vapid_keys()
 
 
 def _send_push(
@@ -52,10 +114,8 @@ def _send_push(
 
 @router.get("/config")
 def get_public_config():
-    public = os.getenv("VAPID_PUBLIC_KEY")
-    if not public:
-        raise HTTPException(status_code=500, detail="Clé publique VAPID manquante")
-    return {"public_key": public}
+    vapid = _get_vapid_settings()
+    return {"public_key": vapid["public"]}
 
 
 @router.post("/subscribers", response_model=schemas.SubscriberResponse)
