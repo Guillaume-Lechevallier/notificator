@@ -121,6 +121,12 @@ Le schéma MySQL est décrit dans `last_update.sql`. Si le modèle évolue, dép
 - Ajout de la colonne `business_id` sur la table `notifications` pour tracer les envois ciblés.
 - Exécutez `last_update.sql` sur les bases existantes pour créer la table et la clé étrangère.
 
+### Mise à jour 2025-11-26
+
+- Ajout d'une migration de rattrapage pour la colonne optionnelle `label` de la table `subscribers` (nécessaire pour éviter l'erreur `Unknown column 'subscribers.label' in 'field list'` lors de l'inscription). 
+- Le script `last_update.sql` aligne désormais la table `subscribers` (colonnes Web Push et index d'unicité sur `endpoint`) en plus des colonnes `click_url` et `business_id`.
+- Exécutez `last_update.sql` sur toute base créée avant cette date après avoir archivé l'ancienne version dans `last_update_old.sql`.
+
 ### Mise à jour 2025-11-24
 
 - Une colonne `click_url` est désormais obligatoire pour enregistrer les liens de redirection des notifications.
