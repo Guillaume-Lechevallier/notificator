@@ -98,3 +98,7 @@ class DeliveryResponse(BaseModel):
 
 class DeliveryList(BaseModel):
     notifications: List[DeliveryResponse]
+
+
+class UploadResponse(BaseModel):
+    url: str

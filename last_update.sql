@@ -1,4 +1,4 @@
--- Mise à jour 2025-11-28 : nettoyage des abonnés invalides avant l'index d'unicité sur endpoint
+-- Mise à jour 2025-11-30 : autoriser plusieurs inscriptions par endpoint
 -- Idempotent et compatible MySQL 8.0 (ALTER conditionnels via PREPARE/EXECUTE)
 
 -- Tables de base (installation fraîche)
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS subscribers (
     auth TEXT NOT NULL,
     user_agent VARCHAR(255) NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_subscriber_endpoint (endpoint(255))
+    KEY idx_subscriber_endpoint (endpoint(255))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS businesses (
@@ -128,15 +128,10 @@ SET @sql := (
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Nettoyage des endpoints invalides avant création de l'index unique
+-- Nettoyage des endpoints vides
 DELETE FROM subscribers WHERE endpoint IS NULL OR TRIM(endpoint) = '';
 
--- Suppression des doublons d'endpoint en conservant le premier enregistrement
-DELETE s1 FROM subscribers s1
-JOIN subscribers s2 ON s1.endpoint = s2.endpoint
-WHERE s1.id > s2.id AND s1.endpoint IS NOT NULL AND TRIM(s1.endpoint) <> '';
-
--- Index d'unicité sur endpoint
+-- Suppression de l'index unique sur endpoint s'il existe
 SET @sql := (
     SELECT IF(
         EXISTS (
@@ -144,8 +139,22 @@ SET @sql := (
             WHERE table_schema=@schema_name AND table_name='subscribers'
               AND index_name='uq_subscriber_endpoint'
         ),
+        'ALTER TABLE subscribers DROP INDEX uq_subscriber_endpoint',
+        'DO 0'
+    )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Création d'un index non unique pour les recherches par endpoint
+SET @sql := (
+    SELECT IF(
+        EXISTS (
+            SELECT 1 FROM information_schema.statistics
+            WHERE table_schema=@schema_name AND table_name='subscribers'
+              AND index_name='idx_subscriber_endpoint'
+        ),
         'DO 0',
-        'ALTER TABLE subscribers ADD UNIQUE INDEX uq_subscriber_endpoint (endpoint(255))'
+        'ALTER TABLE subscribers ADD INDEX idx_subscriber_endpoint (endpoint(255))'
     )
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
@@ -203,6 +212,7 @@ SET @sql := (
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- Ajout des colonnes liées aux commerces
 SET @sql := (
     SELECT IF(
         EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema=@schema_name AND table_name='notifications' AND column_name='business_id'),
@@ -215,8 +225,9 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 SET @sql := (
     SELECT IF(
         EXISTS (
-            SELECT 1 FROM information_schema.referential_constraints
-            WHERE constraint_schema=@schema_name AND constraint_name='fk_notification_business'
+            SELECT 1 FROM information_schema.table_constraints
+            WHERE table_schema=@schema_name AND table_name='notifications'
+              AND constraint_name='fk_notification_business'
         ),
         'DO 0',
         'ALTER TABLE notifications ADD CONSTRAINT fk_notification_business FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL'
@@ -224,12 +235,21 @@ SET @sql := (
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Clé étrangère sur businesses
+SET @sql := (
+    SELECT IF(
+        EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema=@schema_name AND table_name='businesses' AND column_name='subscriber_id'),
+        'DO 0',
+        'ALTER TABLE businesses ADD COLUMN subscriber_id INT NULL AFTER address'
+    )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 SET @sql := (
     SELECT IF(
         EXISTS (
-            SELECT 1 FROM information_schema.referential_constraints
-            WHERE constraint_schema=@schema_name AND constraint_name='fk_business_subscriber'
+            SELECT 1 FROM information_schema.table_constraints
+            WHERE table_schema=@schema_name AND table_name='businesses'
+              AND constraint_name='fk_business_subscriber'
         ),
         'DO 0',
         'ALTER TABLE businesses ADD CONSTRAINT fk_business_subscriber FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE SET NULL'
