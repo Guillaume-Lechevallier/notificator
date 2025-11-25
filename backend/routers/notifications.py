@@ -1,10 +1,11 @@
 import json
+import mimetypes
 import os
 import shutil
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from urllib.parse import urlencode
 from uuid import uuid4
-import mimetypes
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -100,12 +101,19 @@ def _send_push(
     notification: models.Notification,
     vapid: dict[str, str],
 ):
+    fallback_params = {
+        "image": notification.image_url or "",
+        "title": notification.title or "",
+    }
+    if notification.body:
+        fallback_params["body"] = notification.body
+
     payload = {
         "title": notification.title,
         "body": notification.body or "",
         "image": notification.image_url,
         "url": notification.click_url
-        or f"/notification.html?image={notification.image_url or ''}&target={notification.click_url or ''}",
+        or f"/notification.html?{urlencode(fallback_params)}",
         "tag": f"notificator-{notification.id}",
     }
 
