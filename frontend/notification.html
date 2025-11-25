@@ -3,26 +3,154 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Notification</title>
+    <title>Page d'atterrissage</title>
     <style>
-      :root { font-family: 'Inter', system-ui, sans-serif; background: #0b1220; color: #e6edf3; }
-      body { display: grid; place-items: center; min-height: 100vh; margin: 0; }
-      .frame { background: #0f172a; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; box-shadow: 0 16px 50px rgba(0,0,0,0.3); max-width: 90vw; }
-      img { max-width: 100%; border-radius: 12px; display: block; }
-      a { color: #38bdf8; display: inline-block; margin-top: 12px; }
+      :root {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: var(--bg-color);
+        color: var(--text-color);
+        --bg-color: #0b1220;
+        --panel: rgba(15, 23, 42, 0.8);
+        --border: rgba(31, 41, 55, 0.8);
+        --muted: #cbd5e1;
+        --accent: #f59e0b;
+        --link: #38bdf8;
+        color-scheme: dark;
+      }
+      body[data-theme='light'] {
+        --bg-color: #eef2f7;
+        --panel: rgba(255, 255, 255, 0.9);
+        --border: rgba(229, 231, 235, 0.9);
+        --muted: #475569;
+        --text-color: #0f172a;
+        --link: #2563eb;
+        color-scheme: light;
+      }
+      * { box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background: var(--bg-color);
+        color: var(--text-color);
+      }
+      .hero {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 32px 18px;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      .panel {
+        position: relative;
+        z-index: 1;
+        width: min(720px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 24px 20px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(8px);
+      }
+      .panel h1 { margin: 0 0 10px; }
+      .panel p { margin: 0 0 20px; color: var(--muted); }
+      .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+      .btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--border); text-decoration: none; font-weight: 700; color: #0b1220; background: linear-gradient(135deg, #fbbf24, var(--accent)); box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3); }
+      .btn.secondary { background: var(--panel); color: var(--text-color); border: 1px solid var(--border); box-shadow: none; }
+      .muted { color: var(--muted); }
+      .topbar { position: fixed; top: 18px; right: 18px; z-index: 2; display: flex; gap: 10px; }
+      .toggle { border: 1px solid var(--border); background: var(--panel); color: var(--text-color); padding: 10px 14px; border-radius: 12px; cursor: pointer; }
+      @media (max-width: 540px) {
+        .actions { flex-direction: column; align-items: stretch; }
+        .btn { justify-content: center; width: 100%; }
+      }
     </style>
   </head>
   <body>
-    <div class="frame">
-      <img id="image" alt="Notification" />
-      <a id="cta" href="#" target="_blank" rel="noreferrer">Ouvrir le lien associé</a>
+    <div class="topbar">
+      <button id="theme-toggle" class="toggle" type="button">🌙 Mode sombre</button>
     </div>
+    <section class="hero" id="hero">
+      <div class="panel">
+        <h1 id="title">Votre notification</h1>
+        <p id="body" class="muted">Merci d'avoir ouvert cette notification.</p>
+        <div class="actions">
+          <a id="call-button" class="btn" href="#" target="_blank" rel="noreferrer">📞 Appeler</a>
+          <a id="map-button" class="btn secondary" href="#" target="_blank" rel="noreferrer">📍 Voir l'adresse</a>
+        </div>
+      </div>
+    </section>
     <script>
       const params = new URLSearchParams(window.location.search);
-      const imageUrl = params.get('image');
-      const targetUrl = params.get('target');
-      document.getElementById('image').src = imageUrl || '';
-      document.getElementById('cta').href = targetUrl || '#';
+      const hero = document.getElementById('hero');
+      const titleEl = document.getElementById('title');
+      const bodyEl = document.getElementById('body');
+      const callButton = document.getElementById('call-button');
+      const mapButton = document.getElementById('map-button');
+      const themeToggle = document.getElementById('theme-toggle');
+
+      function applyTheme(theme) {
+        const next = theme || localStorage.getItem('notificator-theme') || 'dark';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem('notificator-theme', next);
+        themeToggle.textContent = next === 'dark' ? '🌞 Mode clair' : '🌙 Mode sombre';
+      }
+
+      function toggleTheme() {
+        const current = document.body.getAttribute('data-theme') || 'dark';
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+      }
+
+      const payload = {
+        image: params.get('image') || '',
+        title: params.get('title'),
+        body: params.get('body'),
+        call: params.get('call'),
+        address: params.get('address'),
+      };
+
+      function hydrate() {
+        const overlay =
+          (document.body.getAttribute('data-theme') || 'dark') === 'dark'
+            ? 'linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.35) 100%)'
+            : 'linear-gradient(180deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.45) 100%)';
+
+        if (payload.image) {
+          hero.style.backgroundImage = `${overlay}, url(${payload.image})`;
+          hero.style.backgroundBlendMode = 'overlay';
+        } else {
+          hero.style.backgroundImage = overlay;
+          hero.style.backgroundBlendMode = 'normal';
+        }
+
+        if (payload.title) titleEl.textContent = payload.title;
+        if (payload.body) bodyEl.textContent = payload.body;
+
+        if (payload.call) {
+          callButton.href = `tel:${payload.call}`;
+          callButton.style.display = 'inline-flex';
+        } else {
+          callButton.style.display = 'none';
+        }
+
+        if (payload.address) {
+          const destination = encodeURIComponent(payload.address);
+          mapButton.href = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+          mapButton.style.display = 'inline-flex';
+        } else {
+          mapButton.style.display = 'none';
+        }
+      }
+
+      themeToggle.addEventListener('click', () => {
+        toggleTheme();
+        hydrate();
+      });
+      applyTheme();
+      hydrate();
     </script>
   </body>
 </html>

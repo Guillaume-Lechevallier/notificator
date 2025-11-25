@@ -26,3 +26,5 @@
 - Sur pywebpush 2.0 et versions ultérieures, l'appel `webpush` n'accepte plus le paramètre `vapid_public_key`. Utilisez uniquement `vapid_private_key` et `vapid_claims` pour éviter l'exception `TypeError: webpush() got an unexpected keyword argument 'vapid_public_key'`.
 - Mise à jour 2025-11-30 : `subscribers.endpoint` n'est plus unique afin d'autoriser plusieurs inscriptions pour un même navigateur (ex. plusieurs liens d'enrôlement). Le script `last_update.sql` supprime l'index unique et crée un index non unique `idx_subscriber_endpoint`.
 - L'upload d'images passe par `POST /api/uploads` (stockage dans `frontend/uploads/`). Le formulaire admin remplit automatiquement l'URL de l'image après téléversement ; éviter les hotlinks externes.
+- L'interface admin propose un thème clair/sombre (persisté via `localStorage`) partagé avec `notification.html`. Ne supprimez pas le sélecteur et privilégiez les variables CSS pour ajuster les couleurs.
+- Les liens de destination sont construits vers `notification.html` avec les paramètres `image`, `title`, `body` et, si les cases sont cochées côté administration, `call` (tel:...) et `address` (Google Maps itinéraire).

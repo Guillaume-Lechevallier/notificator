@@ -9,6 +9,8 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - `admin.html` propose désormais une gestion des commerces (fiche détaillée + envoi ciblé).
 - Le formulaire d'envoi accepte des images téléversées localement : elles sont hébergées dans `frontend/uploads/` via `POST
   /api/uploads`.
+- L'interface d'administration dispose d'un interrupteur clair/sombre. Le thème est retenu dans le navigateur et synchronisé
+  avec la page d'atterrissage (`notification.html`).
 - `last_update.sql` : script SQL à exécuter sur MySQL pour provisionner les tables (Web Push, abonnés, notifications, livraisons).
 - `docker-compose.yml` : lance MySQL et l'API sur le port 8000.
 
@@ -28,7 +30,8 @@ docker compose up --build
 L'API est disponible sur `http://localhost:8000` et sert aussi le frontend :
 
 - `http://localhost:8000/index.html` : inscription / réception
-- `http://localhost:8000/admin.html` : panneau d'administration
+- `http://localhost:8000/admin.html` : panneau d'administration (mode clair/sombre + génération automatique du lien de
+  destination)
 
 ### Clés VAPID préconfigurées (développement)
 
@@ -116,6 +119,17 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 - Depuis `admin.html`, ajoutez une image via le champ « Image (téléversement recommandé) » : le fichier est envoyé en `POST` sur `/api/uploads` et l'URL relative est remplie automatiquement dans le champ « URL de l'image ».
 - Les fichiers sont stockés dans `frontend/uploads/` et servis par FastAPI en statique (aucun hotlinking externe nécessaire).
 - Si besoin, une URL d'image déjà en ligne peut toujours être saisie manuellement.
+
+### Page d'atterrissage enrichie (lien de destination)
+
+- Le lien de destination est généré automatiquement vers `notification.html` : le fond reprend l'image de la notification et
+  affiche le titre/contenu envoyés.
+- Deux options facultatives complètent la page :
+  - **« Appeler »** : cochez la case puis renseignez le numéro à composer ; le bouton appelle `tel:+33...` sur la page.
+  - **« Voir l'adresse »** : cochez la case puis indiquez l'adresse complète ; le bouton ouvre Google Maps avec l'itinéraire
+    depuis la position actuelle vers cette destination.
+- Les paramètres sont transmis uniquement si les cases correspondantes sont cochées. Vous pouvez préremplir numéro et adresse en
+  sélectionnant un commerce : les champs reprennent les coordonnées stockées.
 
 ## Flux fonctionnel
 

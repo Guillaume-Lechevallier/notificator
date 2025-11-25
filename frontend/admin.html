@@ -5,43 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Notificator - Administration</title>
     <style>
-      :root { font-family: 'Inter', system-ui, sans-serif; background: #0b1220; color: #e6edf3; }
-      body { margin: 0 auto; max-width: 1200px; padding: 32px 24px 96px; }
-      h1 { display: flex; align-items: center; gap: 12px; }
+      :root {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: var(--bg-color);
+        color: var(--text-color);
+        --bg-color: #0b1220;
+        --panel-color: #0f172a;
+        --panel-border: #1f2937;
+        --muted: #9ca3af;
+        --accent: #f59e0b;
+        --surface-contrast: #0b1220;
+        --link: #38bdf8;
+        color-scheme: dark;
+      }
+      body[data-theme='light'] {
+        --bg-color: #f7f8fb;
+        --panel-color: #ffffff;
+        --panel-border: #e5e7eb;
+        --surface-contrast: #f2f4f8;
+        --muted: #4b5563;
+        --text-color: #0f172a;
+        --link: #2563eb;
+        color-scheme: light;
+      }
+      body { margin: 0 auto; max-width: 1200px; padding: 32px 24px 96px; background: var(--bg-color); }
+      h1 { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+      .title-group { display: flex; align-items: center; gap: 12px; }
       .layout { display: grid; grid-template-columns: 320px 1fr; gap: 18px; align-items: start; }
-      .panel { background: #0f172a; border: 1px solid #1f2937; border-radius: 18px; padding: 24px; box-shadow: 0 12px 60px rgba(0,0,0,0.32); margin-bottom: 20px; }
+      .panel { background: var(--panel-color); border: 1px solid var(--panel-border); border-radius: 18px; padding: 24px; box-shadow: 0 12px 60px rgba(0,0,0,0.12); margin-bottom: 20px; }
       label { display: block; font-weight: 600; margin: 12px 0 6px; }
-      input, textarea { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid #1f2937; background: #0b1220; color: #e6edf3; font-size: 16px; box-sizing: border-box; }
+      input, textarea { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--panel-border); background: var(--surface-contrast); color: var(--text-color); font-size: 16px; box-sizing: border-box; }
       textarea { min-height: 120px; resize: vertical; }
       .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
       button { border: none; border-radius: 12px; padding: 12px 18px; font-size: 16px; font-weight: 700; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; color: #0b1220; }
-      .primary { background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3); }
+      .primary { background: linear-gradient(135deg, #fbbf24, var(--accent)); box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3); }
       .primary:hover { transform: translateY(-1px); }
-      .ghost { background: #0b1220; color: #9ca3af; border: 1px solid #1f2937; }
-      .badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: #111827; border: 1px solid #1f2937; color: #9ca3af; }
+      .ghost { background: var(--surface-contrast); color: var(--muted); border: 1px solid var(--panel-border); }
+      .badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: var(--surface-contrast); border: 1px solid var(--panel-border); color: var(--muted); }
       .list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-      .list li { background: #0b1220; border: 1px solid #1f2937; border-radius: 12px; padding: 16px; cursor: pointer; }
-      .list li.active { border-color: #f59e0b; box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.4); }
+      .list li { background: var(--surface-contrast); border: 1px solid var(--panel-border); border-radius: 12px; padding: 16px; cursor: pointer; }
+      .list li.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.4); }
       .list h3 { margin: 0 0 6px; }
-      .meta { color: #9ca3af; font-size: 14px; }
+      .meta { color: var(--muted); font-size: 14px; }
       .bell { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-      .bell-icon { background: #f59e0b; color: #111827; border-radius: 50%; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }
-      .preview { border: 1px dashed #1f2937; border-radius: 14px; min-height: 220px; display: grid; place-items: center; background: #0b1220; }
+      .bell-icon { background: var(--accent); color: #111827; border-radius: 50%; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }
+      .preview { border: 1px dashed var(--panel-border); border-radius: 14px; min-height: 220px; display: grid; place-items: center; background: var(--surface-contrast); }
       .preview img { max-width: 100%; max-height: 220px; border-radius: 12px; }
       .sidebar { position: sticky; top: 24px; }
       .input-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      .subtitle { color: #9ca3af; margin-top: 0; }
-      a { color: #38bdf8; }
+      .subtitle { color: var(--muted); margin-top: 0; }
+      a { color: var(--link); }
       .full { width: 100%; text-align: center; }
       .business-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-      .summary-card { background: #0b1220; border: 1px dashed #1f2937; border-radius: 12px; padding: 14px; min-height: 180px; }
+      .summary-card { background: var(--surface-contrast); border: 1px dashed var(--panel-border); border-radius: 12px; padding: 14px; min-height: 180px; }
       .summary-card p { margin: 8px 0; }
       .section-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .toggle { padding: 10px 14px; color: var(--text-color); background: var(--surface-contrast); border: 1px solid var(--panel-border); border-radius: 12px; cursor: pointer; }
+      .toggles { display: flex; align-items: center; gap: 10px; }
+      .checkbox { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--text-color); }
+      .link-preview { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 12px; border: 1px dashed var(--panel-border); background: var(--surface-contrast); }
+      .link-preview small { color: var(--muted); display: block; }
+      .link-preview a { word-break: break-all; font-weight: 600; }
       @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } .business-grid { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
-    <h1><span class="bell-icon">🔔</span> Panneau d'administration</h1>
+    <h1>
+      <span class="title-group"><span class="bell-icon">🔔</span> Panneau d'administration</span>
+      <div class="toggles">
+        <button id="theme-toggle" class="toggle" type="button">🌙 Mode sombre</button>
+      </div>
+    </h1>
     <p>Publiez des notifications Web Push avec image et lien de redirection. Le service worker affichera la pop-up sur desktop et mobile.</p>
 
     <div class="layout">
@@ -110,6 +144,20 @@
               <input id="click-url" type="url" placeholder="https://votre-landing-page" />
             </div>
           </div>
+          <div class="input-inline">
+            <label class="checkbox" for="toggle-call"><input id="toggle-call" type="checkbox" /> Ajouter le bouton «&nbsp;Appeler&nbsp;»</label>
+            <label class="checkbox" for="toggle-map"><input id="toggle-map" type="checkbox" /> Ajouter le bouton «&nbsp;Voir l'adresse&nbsp;»</label>
+          </div>
+          <div class="input-inline">
+            <div>
+              <label for="call-number">Numéro à composer</label>
+              <input id="call-number" type="tel" placeholder="06 12 34 56 78" />
+            </div>
+            <div>
+              <label for="destination-address">Adresse pour l'itinéraire</label>
+              <input id="destination-address" type="text" placeholder="12 rue des Lilas, Paris" />
+            </div>
+          </div>
           <label for="body">Contenu</label>
           <textarea id="body" placeholder="Détail du message à afficher dans la pop-up"></textarea>
           <label for="image-file">Image (téléversement recommandé)</label>
@@ -118,6 +166,13 @@
           <label for="image-url">URL de l'image (remplie automatiquement après envoi)</label>
           <input id="image-url" type="url" placeholder="https://exemple.com/visuel.jpg" />
           <div class="preview" id="image-preview">Prévisualisation de l'image</div>
+          <div class="link-preview">
+            <div>
+              <strong>Page d'atterrissage générée</strong>
+              <small>Fond = image, boutons dynamiques selon les cases cochées.</small>
+            </div>
+            <a id="landing-preview" href="#" target="_blank" rel="noreferrer">Ouvrir l'aperçu</a>
+          </div>
           <div class="actions">
             <button class="primary bell" id="send"><span>🔔</span> Envoyer / renvoyer la notification</button>
             <span class="badge" id="status">Prêt</span>
@@ -165,8 +220,28 @@
         subscriberId: document.getElementById('business-subscriber-id'),
       };
 
+      const callToggle = document.getElementById('toggle-call');
+      const mapToggle = document.getElementById('toggle-map');
+      const callNumberInput = document.getElementById('call-number');
+      const destinationAddressInput = document.getElementById('destination-address');
+      const landingPreviewLink = document.getElementById('landing-preview');
+      const themeToggle = document.getElementById('theme-toggle');
+
       let businesses = [];
       let selectedBusinessId = null;
+
+      function applyTheme(theme) {
+        const nextTheme = theme || localStorage.getItem('notificator-theme') || 'dark';
+        document.body.setAttribute('data-theme', nextTheme);
+        localStorage.setItem('notificator-theme', nextTheme);
+        themeToggle.textContent = nextTheme === 'dark' ? '🌞 Mode clair' : '🌙 Mode sombre';
+      }
+
+      function toggleTheme() {
+        const current = document.body.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+      }
 
       function renderPreview() {
         const url = imageInput.value.trim();
@@ -196,6 +271,7 @@
           const data = await response.json();
           imageInput.value = data.url;
           renderPreview();
+          syncLandingLink();
           imageUploadStatus.textContent = 'Image hébergée localement et prête à être envoyée.';
           imageUploadStatus.style.color = '#9ca3af';
         } catch (error) {
@@ -203,6 +279,29 @@
           imageUploadStatus.textContent = error.message;
           imageUploadStatus.style.color = '#f87171';
         }
+      }
+
+      function buildLandingLink() {
+        const landingUrl = new URL(`${window.location.origin}/notification.html`);
+        const imageUrl = imageInput.value.trim();
+        const title = titleInput.value.trim();
+        const body = bodyInput.value.trim();
+        const callNumber = callNumberInput.value.trim();
+        const destinationAddress = destinationAddressInput.value.trim();
+
+        if (imageUrl) landingUrl.searchParams.set('image', imageUrl);
+        if (title) landingUrl.searchParams.set('title', title);
+        if (body) landingUrl.searchParams.set('body', body);
+        if (callToggle.checked && callNumber) landingUrl.searchParams.set('call', callNumber);
+        if (mapToggle.checked && destinationAddress) landingUrl.searchParams.set('address', destinationAddress);
+
+        return landingUrl.toString();
+      }
+
+      function syncLandingLink() {
+        const link = buildLandingLink();
+        clickUrlInput.value = link;
+        landingPreviewLink.href = link;
       }
 
       function renderBusinessSummary(business) {
@@ -247,6 +346,9 @@
         businessForm.email.value = business?.email || '';
         businessForm.address.value = business?.address || '';
         businessForm.subscriberId.value = business?.subscriber_id || '';
+        callNumberInput.value = business?.phone || '';
+        destinationAddressInput.value = business?.address || '';
+        syncLandingLink();
       }
 
       function highlightSelection() {
@@ -418,6 +520,8 @@
         status.textContent = selectedBusinessId ? 'Envoi ciblé...' : 'Envoi en cours...';
         status.style.color = '#9ca3af';
 
+        syncLandingLink();
+
         const targetBusiness = businesses.find((b) => b.id === selectedBusinessId);
         if (selectedBusinessId && targetBusiness && !targetBusiness.subscriber_id) {
           status.textContent = 'Associez un abonné push à ce commerce avant l\'envoi';
@@ -463,11 +567,24 @@
           imageUploadStatus.style.color = '#9ca3af';
         }
       });
-      imageInput.addEventListener('input', renderPreview);
+      imageInput.addEventListener('input', () => {
+        renderPreview();
+        syncLandingLink();
+      });
+      titleInput.addEventListener('input', syncLandingLink);
+      bodyInput.addEventListener('input', syncLandingLink);
+      callNumberInput.addEventListener('input', syncLandingLink);
+      destinationAddressInput.addEventListener('input', syncLandingLink);
+      callToggle.addEventListener('change', syncLandingLink);
+      mapToggle.addEventListener('change', syncLandingLink);
+      themeToggle.addEventListener('click', toggleTheme);
       search.addEventListener('input', filterBusinesses);
       generateEnrollmentBtn.addEventListener('click', generateEnrollmentLink);
       copyEnrollmentBtn.addEventListener('click', copyEnrollmentLink);
 
+      applyTheme();
+      renderPreview();
+      syncLandingLink();
       fetchHistory();
       fetchBusinesses();
     </script>
