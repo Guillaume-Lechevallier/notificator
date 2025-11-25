@@ -16,7 +16,7 @@ from pywebpush import Vapid, WebPushException, webpush
 router = APIRouter(prefix="/api", tags=["notifications"])
 
 
-DEFAULT_VAPID_CLAIM = "mailto:admin@example.com"
+DEFAULT_VAPID_CLAIM = "mailto:moilechevallier@gmail.com"
 VAPID_STORE = Path(__file__).resolve().parent.parent / ".vapid_keys.json"
 
 

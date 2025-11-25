@@ -17,9 +17,9 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: mysql+mysqlconnector://notificator:notificator@db:3306/notificator
-      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
-      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
-      VAPID_CLAIM_EMAIL: ${VAPID_CLAIM_EMAIL:-mailto:admin@example.com}
+      VAPID_PUBLIC_KEY: BFJYF7VW4vjhjTpt9PExNUNHC3Q4VCZ4rN9cvj15IFEK-wM2LoXHzHPja0miVp7EG6FQRyg_MGFMVFV5DAYJUL4
+      VAPID_PRIVATE_KEY: VBId-1ytbTzWMfpwNolBoEjZ5xUvwLUNIObyVBxxlBE
+      VAPID_CLAIM_EMAIL: mailto:moilechevallier@gmail.com
     ports:
       - "8000:8000"
     depends_on:
