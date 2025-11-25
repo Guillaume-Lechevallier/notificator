@@ -1,7 +1,7 @@
--- Mise à jour pour garantir la présence de la colonne de redirection des notifications
--- Appliquer ce script sur la base existante avant d'envoyer de nouvelles notifications.
+-- Mise à jour pour la gestion des commerces et des envois ciblés
+-- Appliquer ce script après sauvegarde des données existantes.
 
--- Crée les tables si elles n'existent pas déjà avec la bonne structure (installation fraîche)
+-- Tables de base (installation fraîche)
 CREATE TABLE IF NOT EXISTS subscribers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     device_token VARCHAR(64) NOT NULL UNIQUE,
@@ -14,13 +14,28 @@ CREATE TABLE IF NOT EXISTS subscribers (
     UNIQUE KEY uq_subscriber_endpoint (endpoint(255))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS businesses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    manager_name VARCHAR(255) NULL,
+    phone VARCHAR(50) NULL,
+    email VARCHAR(255) NULL,
+    address VARCHAR(255) NULL,
+    subscriber_id INT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_business_subscriber FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     body TEXT NULL,
     image_url TEXT NULL,
     click_url TEXT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    business_id INT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notification_business FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS deliveries (
@@ -41,6 +56,11 @@ CREATE TABLE IF NOT EXISTS health_checks (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Aligne les installations existantes qui auraient encore une colonne target_url
+-- Alignement des installations existantes
 ALTER TABLE notifications
-    ADD COLUMN IF NOT EXISTS click_url TEXT NULL AFTER image_url;
+    ADD COLUMN IF NOT EXISTS click_url TEXT NULL AFTER image_url,
+    ADD COLUMN IF NOT EXISTS business_id INT NULL AFTER click_url,
+    ADD CONSTRAINT IF NOT EXISTS fk_notification_business FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL;
+
+ALTER TABLE businesses
+    ADD CONSTRAINT IF NOT EXISTS fk_business_subscriber FOREIGN KEY (subscriber_id) REFERENCES subscribers(id) ON DELETE SET NULL;

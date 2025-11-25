@@ -100,17 +100,33 @@ def list_notifications(db: Session = Depends(get_db)):
 
 @router.post("/notifications", response_model=schemas.NotificationResponse)
 def send_notification(payload: schemas.NotificationCreate, db: Session = Depends(get_db)):
+    business = None
+    subscribers: list[models.Subscriber]
+
+    if payload.business_id:
+        business = db.query(models.Business).filter(models.Business.id == payload.business_id).first()
+        if not business:
+            raise HTTPException(status_code=404, detail="Commerce ciblé introuvable")
+        if not business.subscriber:
+            raise HTTPException(status_code=400, detail="Ce commerce n'est associé à aucun abonné push")
+        subscribers = [business.subscriber]
+    else:
+        subscribers = db.query(models.Subscriber).all()
+
+    if not subscribers:
+        raise HTTPException(status_code=400, detail="Aucun destinataire disponible pour l'envoi")
+
     notification = models.Notification(
         title=payload.title,
         body=payload.body,
         image_url=payload.image_url,
         click_url=payload.click_url,
+        business=business,
     )
     db.add(notification)
     db.flush()
 
     vapid = _get_vapid_settings()
-    subscribers = db.query(models.Subscriber).all()
     for subscriber in subscribers:
         delivery = models.Delivery(
             notification=notification,

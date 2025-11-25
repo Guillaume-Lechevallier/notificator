@@ -20,7 +20,8 @@
       .ghost { background: #0b1220; color: #9ca3af; border: 1px solid #1f2937; }
       .badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: #111827; border: 1px solid #1f2937; color: #9ca3af; }
       .list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-      .list li { background: #0b1220; border: 1px solid #1f2937; border-radius: 12px; padding: 16px; }
+      .list li { background: #0b1220; border: 1px solid #1f2937; border-radius: 12px; padding: 16px; cursor: pointer; }
+      .list li.active { border-color: #f59e0b; box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.4); }
       .list h3 { margin: 0 0 6px; }
       .meta { color: #9ca3af; font-size: 14px; }
       .bell { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
@@ -31,7 +32,12 @@
       .input-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
       .subtitle { color: #9ca3af; margin-top: 0; }
       a { color: #38bdf8; }
-      @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } }
+      .full { width: 100%; text-align: center; }
+      .business-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+      .summary-card { background: #0b1220; border: 1px dashed #1f2937; border-radius: 12px; padding: 14px; min-height: 180px; }
+      .summary-card p { margin: 8px 0; }
+      .section-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } .sidebar { position: static; } .business-grid { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
@@ -40,13 +46,52 @@
 
     <div class="layout">
       <aside class="panel sidebar">
-        <h2>Destinataires</h2>
-        <p class="subtitle">Recherche par nom de commerce ou token.</p>
+        <h2>Commerces</h2>
+        <p class="subtitle">Sélectionnez un commerce pour afficher et modifier ses coordonnées.</p>
         <input id="search" type="search" placeholder="rechercher" />
-        <ul class="list" id="audience"></ul>
+        <ul class="list" id="businesses"></ul>
+        <button class="ghost full" id="add-business">+ Ajouter un commerce</button>
       </aside>
 
       <main>
+        <section class="panel">
+          <div class="section-header">
+            <h2 id="business-title">Fiche commerce</h2>
+            <span class="badge" id="business-status">Aucun commerce sélectionné</span>
+          </div>
+          <div class="business-grid">
+            <div>
+              <h3>Informations enregistrées</h3>
+              <div class="summary-card" id="business-summary">Choisissez un commerce pour afficher les informations existantes.</div>
+            </div>
+            <div>
+              <h3>Modifier ou ajouter</h3>
+              <label for="business-name">Nom du commerce</label>
+              <input id="business-name" type="text" placeholder="Ex : Boulangerie des Halles" />
+              <div class="input-inline">
+                <div>
+                  <label for="manager-name">Nom du gérant</label>
+                  <input id="manager-name" type="text" placeholder="Ex : Jeanne Dupont" />
+                </div>
+                <div>
+                  <label for="business-phone">Téléphone</label>
+                  <input id="business-phone" type="tel" placeholder="06 12 34 56 78" />
+                </div>
+              </div>
+              <label for="business-email">Email</label>
+              <input id="business-email" type="email" placeholder="contact@commerce.fr" />
+              <label for="business-address">Adresse</label>
+              <input id="business-address" type="text" placeholder="12 rue des Lilas, 75000 Paris" />
+              <label for="business-subscriber-id">ID abonné push (optionnel)</label>
+              <input id="business-subscriber-id" type="number" placeholder="Associer un abonné existant" />
+              <div class="actions">
+                <button class="primary" id="save-business">Enregistrer le commerce</button>
+                <button class="ghost" id="reset-business">Réinitialiser</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="panel">
           <h2>Composer une notification</h2>
           <div class="input-inline">
@@ -65,7 +110,7 @@
           <input id="image-url" type="url" placeholder="https://exemple.com/visuel.jpg" />
           <div class="preview" id="image-preview">Prévisualisation de l'image</div>
           <div class="actions">
-            <button class="primary bell" id="send"><span>🔔</span> Envoyer la notification</button>
+            <button class="primary bell" id="send"><span>🔔</span> Envoyer / renvoyer la notification</button>
             <span class="badge" id="status">Prêt</span>
           </div>
         </section>
@@ -80,21 +125,174 @@
     <script>
       const status = document.getElementById('status');
       const history = document.getElementById('history');
-      const audience = document.getElementById('audience');
+      const businessList = document.getElementById('businesses');
       const search = document.getElementById('search');
+      const addBusinessBtn = document.getElementById('add-business');
+      const saveBusinessBtn = document.getElementById('save-business');
+      const resetBusinessBtn = document.getElementById('reset-business');
+      const businessStatus = document.getElementById('business-status');
+      const businessSummary = document.getElementById('business-summary');
+      const businessTitle = document.getElementById('business-title');
+
       const titleInput = document.getElementById('title');
       const bodyInput = document.getElementById('body');
       const imageInput = document.getElementById('image-url');
       const imagePreview = document.getElementById('image-preview');
       const clickUrlInput = document.getElementById('click-url');
 
+      const businessForm = {
+        name: document.getElementById('business-name'),
+        manager: document.getElementById('manager-name'),
+        phone: document.getElementById('business-phone'),
+        email: document.getElementById('business-email'),
+        address: document.getElementById('business-address'),
+        subscriberId: document.getElementById('business-subscriber-id'),
+      };
+
+      let businesses = [];
+      let selectedBusinessId = null;
+
       function renderPreview() {
         const url = imageInput.value.trim();
         if (!url) {
-          imagePreview.innerHTML = 'Prévisualisation de l\'image';
+          imagePreview.innerHTML = "Prévisualisation de l'image";
           return;
         }
         imagePreview.innerHTML = `<img src="${url}" alt="Prévisualisation" />`;
+      }
+
+      function renderBusinessSummary(business) {
+        if (!business) {
+          businessSummary.innerHTML = 'Choisissez un commerce pour afficher les informations existantes.';
+          return;
+        }
+        businessSummary.innerHTML = `
+          <p><strong>Nom :</strong> ${business.name}</p>
+          <p><strong>Gérant :</strong> ${business.manager_name || 'Non renseigné'}</p>
+          <p><strong>Téléphone :</strong> ${business.phone || 'Non renseigné'}</p>
+          <p><strong>Email :</strong> ${business.email || 'Non renseigné'}</p>
+          <p><strong>Adresse :</strong> ${business.address || 'Non renseignée'}</p>
+          <p><strong>ID abonné push :</strong> ${business.subscriber_id || 'Non associé'}</p>
+        `;
+      }
+
+      function populateBusinessForm(business) {
+        businessForm.name.value = business?.name || '';
+        businessForm.manager.value = business?.manager_name || '';
+        businessForm.phone.value = business?.phone || '';
+        businessForm.email.value = business?.email || '';
+        businessForm.address.value = business?.address || '';
+        businessForm.subscriberId.value = business?.subscriber_id || '';
+      }
+
+      function highlightSelection() {
+        Array.from(businessList.children).forEach((li) => {
+          li.classList.toggle('active', Number(li.dataset.id) === selectedBusinessId);
+        });
+      }
+
+      function renderBusinessList(items) {
+        businessList.innerHTML = '';
+        items.forEach((business) => {
+          const li = document.createElement('li');
+          li.dataset.id = business.id;
+          li.innerHTML = `
+            <h3>${business.name}</h3>
+            <div class="meta">${business.manager_name || 'Gérant inconnu'}${business.phone ? ` • ${business.phone}` : ''}</div>
+          `;
+          li.addEventListener('click', () => selectBusiness(business.id));
+          businessList.appendChild(li);
+        });
+        highlightSelection();
+      }
+
+      function filterBusinesses() {
+        const query = search.value.toLowerCase();
+        const filtered = businesses.filter((b) =>
+          !query ||
+          b.name.toLowerCase().includes(query) ||
+          (b.manager_name && b.manager_name.toLowerCase().includes(query)) ||
+          (b.phone && b.phone.toLowerCase().includes(query))
+        );
+        renderBusinessList(filtered);
+      }
+
+      async function fetchBusinesses() {
+        const response = await fetch('/api/businesses');
+        if (!response.ok) return;
+        businesses = await response.json();
+        filterBusinesses();
+        if (selectedBusinessId) {
+          const existing = businesses.find((b) => b.id === selectedBusinessId);
+          if (existing) {
+            selectBusiness(existing.id, false);
+          } else {
+            resetBusinessForm();
+          }
+        }
+      }
+
+      function resetBusinessForm() {
+        selectedBusinessId = null;
+        businessTitle.textContent = 'Nouveau commerce';
+        businessStatus.textContent = 'Aucun commerce sélectionné';
+        businessStatus.style.color = '#9ca3af';
+        populateBusinessForm(null);
+        renderBusinessSummary(null);
+        highlightSelection();
+      }
+
+      function selectBusiness(id, updateList = true) {
+        const business = businesses.find((b) => b.id === id);
+        if (!business) {
+          resetBusinessForm();
+          return;
+        }
+        selectedBusinessId = business.id;
+        businessTitle.textContent = `Fiche commerce · ${business.name}`;
+        businessStatus.textContent = 'Prêt pour modification ou envoi';
+        populateBusinessForm(business);
+        renderBusinessSummary(business);
+        if (updateList) highlightSelection();
+      }
+
+      async function saveBusiness() {
+        businessStatus.style.color = '#9ca3af';
+        const payload = {
+          name: businessForm.name.value.trim(),
+          manager_name: businessForm.manager.value.trim() || null,
+          phone: businessForm.phone.value.trim() || null,
+          email: businessForm.email.value.trim() || null,
+          address: businessForm.address.value.trim() || null,
+          subscriber_id: businessForm.subscriberId.value ? Number(businessForm.subscriberId.value) : null,
+        };
+
+        if (!payload.name) {
+          businessStatus.textContent = 'Le nom du commerce est requis';
+          return;
+        }
+
+        const isNew = !selectedBusinessId;
+        const url = isNew ? '/api/businesses' : `/api/businesses/${selectedBusinessId}`;
+        const method = isNew ? 'POST' : 'PUT';
+
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          businessStatus.textContent = 'Erreur lors de la sauvegarde du commerce';
+          businessStatus.style.color = '#f87171';
+          return;
+        }
+
+        const saved = await response.json();
+        businessStatus.textContent = isNew ? 'Commerce ajouté' : 'Commerce mis à jour';
+        businessStatus.style.color = '#34d399';
+        await fetchBusinesses();
+        selectBusiness(saved.id);
       }
 
       async function fetchHistory() {
@@ -107,6 +305,7 @@
           li.innerHTML = `
             <h3>${item.title}</h3>
             <div class="meta">${new Date(item.created_at).toLocaleString()}</div>
+            ${item.business ? `<div class="meta">Commerce : ${item.business.name}</div>` : ''}
             <div>${item.body || 'Pas de message'}</div>
             ${item.image_url ? `<div style="margin-top:8px;"><img src="${item.image_url}" alt="visuel" style="max-width:100%; border-radius:10px;" /></div>` : ''}
             ${item.click_url ? `<div class="meta">Lien : <a href="${item.click_url}" target="_blank" rel="noreferrer">${item.click_url}</a></div>` : ''}
@@ -115,41 +314,29 @@
         });
       }
 
-      async function fetchAudience() {
-        const response = await fetch('/api/subscribers');
-        if (!response.ok) return;
-        const items = await response.json();
-        audience.dataset.all = JSON.stringify(items);
-        renderAudience(items);
-      }
-
-      function renderAudience(items) {
-        audience.innerHTML = '';
-        const query = search.value.toLowerCase();
-        items
-          .filter((sub) =>
-            !query ||
-            (sub.label && sub.label.toLowerCase().includes(query)) ||
-            sub.device_token.toLowerCase().includes(query)
-          )
-          .forEach((sub) => {
-            const li = document.createElement('li');
-            li.innerHTML = `<h3>${sub.label || 'Sans nom'}</h3><div class="meta">${sub.device_token.slice(0, 12)}...</div>`;
-            audience.appendChild(li);
-          });
-      }
-
       async function sendNotification() {
-        status.textContent = 'Envoi en cours...';
+        status.textContent = selectedBusinessId ? 'Envoi ciblé...' : 'Envoi en cours...';
+        status.style.color = '#9ca3af';
+
+        const targetBusiness = businesses.find((b) => b.id === selectedBusinessId);
+        if (selectedBusinessId && targetBusiness && !targetBusiness.subscriber_id) {
+          status.textContent = 'Associez un abonné push à ce commerce avant l\'envoi';
+          status.style.color = '#f87171';
+          return;
+        }
+
+        const payload = {
+          title: titleInput.value,
+          body: bodyInput.value || null,
+          image_url: imageInput.value || null,
+          click_url: clickUrlInput.value || null,
+          business_id: selectedBusinessId,
+        };
+
         const response = await fetch('/api/notifications', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: titleInput.value,
-            body: bodyInput.value || null,
-            image_url: imageInput.value || null,
-            click_url: clickUrlInput.value || null,
-          }),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
@@ -158,19 +345,20 @@
           return;
         }
 
-        status.textContent = 'Notification envoyée';
+        status.textContent = selectedBusinessId ? 'Notification envoyée à ce commerce' : 'Notification envoyée';
         status.style.color = '#34d399';
         await fetchHistory();
       }
 
+      addBusinessBtn.addEventListener('click', resetBusinessForm);
+      saveBusinessBtn.addEventListener('click', saveBusiness);
+      resetBusinessBtn.addEventListener('click', resetBusinessForm);
       document.getElementById('send').addEventListener('click', sendNotification);
       imageInput.addEventListener('input', renderPreview);
-      search.addEventListener('input', () => {
-        const items = JSON.parse(audience.dataset.all || '[]');
-        renderAudience(items);
-      });
+      search.addEventListener('input', filterBusinesses);
+
       fetchHistory();
-      fetchAudience();
+      fetchBusinesses();
     </script>
   </body>
 </html>
