@@ -4,6 +4,37 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
+class BusinessBase(BaseModel):
+    name: str
+    manager_name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    subscriber_id: Optional[int] = None
+
+
+class BusinessCreate(BusinessBase):
+    pass
+
+
+class BusinessUpdate(BaseModel):
+    name: Optional[str] = None
+    manager_name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    subscriber_id: Optional[int] = None
+
+
+class BusinessResponse(BusinessBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
 class PushSubscriptionKeys(BaseModel):
     p256dh: str
     auth: str
@@ -37,6 +68,7 @@ class NotificationCreate(BaseModel):
     body: Optional[str] = None
     image_url: Optional[str] = None
     click_url: Optional[str] = None
+    business_id: Optional[int] = None
 
 
 class NotificationResponse(BaseModel):
@@ -46,6 +78,7 @@ class NotificationResponse(BaseModel):
     image_url: Optional[str]
     click_url: Optional[str]
     created_at: datetime
+    business: Optional[BusinessResponse]
 
     class Config:
         orm_mode = True

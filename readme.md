@@ -6,6 +6,7 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 
 - `backend/` : API FastAPI, modèles SQLAlchemy et configuration de la base de données.
 - `frontend/` : pages statiques (inscription et administration).
+- `admin.html` propose désormais une gestion des commerces (fiche détaillée + envoi ciblé).
 - `last_update.sql` : script SQL à exécuter sur MySQL pour provisionner les tables (Web Push, abonnés, notifications, livraisons).
 - `docker-compose.yml` : lance MySQL et l'API sur le port 8000.
 
@@ -63,7 +64,7 @@ export VAPID_CLAIM_EMAIL="mailto:admin@example.com"
 uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
-6. Ouvrez `http://localhost:8000/admin.html` pour envoyer des notifications.
+6. Ouvrez `http://localhost:8000/admin.html` pour gérer vos commerces et envoyer des notifications (globales ou ciblées).
 7. Ouvrez `http://localhost:8000/index.html` depuis un navigateur autorisant les notifications (HTTPS ou localhost).
 
 ## Flux fonctionnel
@@ -78,13 +79,22 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 - `GET /api/config` : renvoie la clé publique VAPID pour s'abonner.
 - `POST /api/subscribers` : enregistre un abonnement Web Push (payload `{ subscription, label?, user_agent? }`).
 - `GET /api/subscribers` : liste les abonnés (nom + token) pour l'aperçu admin.
+- `GET /api/businesses` : liste les commerces et leurs coordonnées (nom, gérant, contact, adresse, abonné associé).
+- `POST /api/businesses` : crée un commerce.
+- `PUT /api/businesses/{id}` : met à jour un commerce existant.
 - `GET /api/notifications` : liste les notifications envoyées.
-- `POST /api/notifications` : crée une notification (payload `{ title, body?, image_url?, click_url? }`).
+- `POST /api/notifications` : crée une notification (payload `{ title, body?, image_url?, click_url?, business_id? }`). Si `business_id` est présent, l'envoi est limité à l'abonné du commerce.
 - `GET /api/push/{device_token}` et endpoints associés restent disponibles pour compatibilité / suivi de livraisons.
 
 ## Base de données
 
 Le schéma MySQL est décrit dans `last_update.sql`. Si le modèle évolue, déplacer l'ancien contenu dans `last_update_old.sql` et mettre le nouveau SQL dans `last_update.sql`.
+
+### Mise à jour 2025-11-25
+
+- Ajout de la table `businesses` (nom, gérant, téléphone, email, adresse, abonné associé) pour stocker les commerces.
+- Ajout de la colonne `business_id` sur la table `notifications` pour tracer les envois ciblés.
+- Exécutez `last_update.sql` sur les bases existantes pour créer la table et la clé étrangère.
 
 ### Mise à jour 2025-11-24
 

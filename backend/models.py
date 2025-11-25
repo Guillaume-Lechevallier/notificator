@@ -20,6 +20,7 @@ class Subscriber(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     deliveries = relationship("Delivery", back_populates="subscriber", cascade="all, delete-orphan")
+    business = relationship("Business", back_populates="subscriber", uselist=False)
 
 
 class Notification(Base):
@@ -30,9 +31,28 @@ class Notification(Base):
     body = Column(Text, nullable=True)
     image_url = Column(Text, nullable=True)
     click_url = Column(Text, nullable=True)
+    business_id = Column(Integer, ForeignKey("businesses.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     deliveries = relationship("Delivery", back_populates="notification", cascade="all, delete-orphan")
+    business = relationship("Business", back_populates="notifications")
+
+
+class Business(Base):
+    __tablename__ = "businesses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    manager_name = Column(String(255), nullable=True)
+    phone = Column(String(50), nullable=True)
+    email = Column(String(255), nullable=True)
+    address = Column(String(255), nullable=True)
+    subscriber_id = Column(Integer, ForeignKey("subscribers.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    subscriber = relationship("Subscriber", back_populates="business")
+    notifications = relationship("Notification", back_populates="business")
 
 
 class Delivery(Base):
