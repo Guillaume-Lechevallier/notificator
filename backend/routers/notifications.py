@@ -112,7 +112,6 @@ def _send_push(
         data=json.dumps(payload),
         vapid_private_key=vapid["private"],
         vapid_claims={"sub": vapid["claim"]},
-        vapid_public_key=vapid["public"],
     )
 
 

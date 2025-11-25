@@ -169,6 +169,10 @@ L'API exécute automatiquement `last_update.sql` au démarrage pour les déploie
 - Une colonne `click_url` est désormais obligatoire pour enregistrer les liens de redirection des notifications.
 - Exécutez `last_update.sql` sur les bases existantes pour ajouter la colonne manquante et éviter l'erreur `Unknown column 'click_url' in 'field list'` observée lors de l'envoi des notifications.
 
+## Dépannage
+
+- `TypeError: webpush() got an unexpected keyword argument 'vapid_public_key'` : à partir de pywebpush 2.0, la fonction `webpush` n'accepte plus ce paramètre. Assurez-vous que l'appel utilise uniquement `vapid_private_key` et `vapid_claims`.
+
 ## Agent
 
 Un fichier `AGENTS.md` n'existait pas à l'origine. Si vous ajoutez des règles de contribution ou des étapes de reprise après incident, créez/éditez `AGENTS.md` à la racine pour documenter les bonnes pratiques.
