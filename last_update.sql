@@ -160,6 +160,49 @@ SET @sql := (
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- Harmonisation des anciens schémas utilisant target_url (colonne obligatoire)
+-- Étape 1 : rendre la colonne facultative pour éviter les erreurs d'insertion
+SET @sql := (
+    SELECT IF(
+        EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema=@schema_name AND table_name='notifications' AND column_name='target_url'
+        ),
+        'ALTER TABLE notifications MODIFY COLUMN target_url TEXT NULL',
+        'DO 0'
+    )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Étape 2 : recopier les valeurs target_url vers click_url si nécessaire
+SET @sql := (
+    SELECT IF(
+        EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema=@schema_name AND table_name='notifications' AND column_name='target_url'
+        ) AND EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema=@schema_name AND table_name='notifications' AND column_name='click_url'
+        ),
+        'UPDATE notifications SET click_url = target_url WHERE (click_url IS NULL OR LENGTH(TRIM(click_url)) = 0) AND target_url IS NOT NULL AND LENGTH(TRIM(target_url)) > 0',
+        'DO 0'
+    )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Étape 3 : supprimer la colonne obsolète target_url
+SET @sql := (
+    SELECT IF(
+        EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema=@schema_name AND table_name='notifications' AND column_name='target_url'
+        ),
+        'ALTER TABLE notifications DROP COLUMN target_url',
+        'DO 0'
+    )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 SET @sql := (
     SELECT IF(
         EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema=@schema_name AND table_name='notifications' AND column_name='business_id'),

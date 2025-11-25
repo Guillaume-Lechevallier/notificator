@@ -143,6 +143,12 @@ L'API exécute automatiquement `last_update.sql` au démarrage pour les déploie
 - Les entrées avec un endpoint vide sont supprimées et les doublons sont dédupliqués en conservant le premier enregistrement avant d'ajouter l'index.
 - Rejouez `last_update.sql` sur les bases existantes en cas d'échec de démarrage lié à cette erreur ; le script est idempotent et peut être exécuté plusieurs fois.
 
+### Mise à jour 2025-11-29
+
+- Le script gère désormais les bases MySQL historiques contenant encore une colonne obligatoire `target_url` sur `notifications`.
+- Lors de l'alignement, la colonne est rendue facultative, ses valeurs sont copiées dans `click_url` si besoin puis la colonne obsolète est supprimée.
+- Cette étape corrige l'erreur `Field 'target_url' doesn't have a default value` observée lors de l'envoi de notifications sur des bases non migrées.
+
 ### Mise à jour 2025-11-24
 
 - Une colonne `click_url` est désormais obligatoire pour enregistrer les liens de redirection des notifications.
