@@ -50,6 +50,7 @@ class SubscriberCreate(BaseModel):
     subscription: PushSubscription
     label: Optional[str] = None
     user_agent: Optional[str] = None
+    business_id: Optional[int] = None
 
 
 class SubscriberResponse(BaseModel):

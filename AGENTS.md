@@ -13,3 +13,4 @@
 - Si l'API retourne `Unknown column 'click_url' in 'field list'`, exécuter le script `last_update.sql` (nouvelle colonne `click_url` dans `notifications`) après avoir archivé l'ancien fichier dans `last_update_old.sql`.
 - Les commerces sont gérés via `/api/businesses` (nom, gérant, contact, adresse, abonné optionnel). Utiliser le champ `subscriber_id` pour lier un commerce à un abonné et permettre les envois ciblés (`business_id` dans `/api/notifications`).
 - Mise à jour schéma 2025-11-25 : table `businesses` + colonne `business_id` sur `notifications`. Exécuter `last_update.sql` sur les bases existantes après avoir archivé l'ancienne version dans `last_update_old.sql`.
+- Le lien d'inscription dédié à un commerce se génère depuis `admin.html` (bouton « Générer un lien d'enrôlement »). Le lien redirige vers `index.html?business_id=...&business_name=...` et `/api/subscribers` associe automatiquement l'abonné au commerce via `business_id`.

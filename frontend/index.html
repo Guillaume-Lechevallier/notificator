@@ -96,6 +96,7 @@
 
       <section class="card">
         <h2>Votre session</h2>
+        <p id="enrollment-info" class="status" style="color:#7ee787;"></p>
         <form id="subscribe-form">
           <label for="label">Nom du commerce (facultatif)</label>
           <input id="label" type="text" placeholder="boulangerie a" />
@@ -119,6 +120,23 @@
       const statusEl = document.getElementById('subscription-status');
       const tokenBadge = document.getElementById('device-token');
       const labelInput = document.getElementById('label');
+      const enrollmentInfo = document.getElementById('enrollment-info');
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const rawBusinessId = urlParams.get('business_id');
+      const resolvedBusinessId =
+        rawBusinessId !== null && rawBusinessId !== '' && Number.isFinite(Number(rawBusinessId))
+          ? Number(rawBusinessId)
+          : null;
+      const businessName = urlParams.get('business_name');
+
+      if (resolvedBusinessId) {
+        const displayName = businessName || 'ce commerce';
+        enrollmentInfo.textContent = `Vous allez lier cette inscription au commerce « ${displayName} » (ID ${resolvedBusinessId}).`;
+        if (businessName) {
+          labelInput.value = businessName;
+        }
+      }
 
       function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -160,6 +178,7 @@
           subscription: sub.toJSON(),
           label: labelInput.value || null,
           user_agent: navigator.userAgent,
+          business_id: resolvedBusinessId,
         };
 
         const response = await fetch('/api/subscribers', {
@@ -185,7 +204,10 @@
         statusEl.style.color = '#7ee787';
         try {
           await registerPush();
-          statusEl.textContent = 'Inscription Web Push confirmée. Vous pouvez fermer la page.';
+          const message = resolvedBusinessId
+            ? `Inscription Web Push confirmée pour le commerce (ID ${resolvedBusinessId}). Vous pouvez fermer la page.`
+            : 'Inscription Web Push confirmée. Vous pouvez fermer la page.';
+          statusEl.textContent = message;
         } catch (error) {
           console.error(error);
           statusEl.textContent = error.message;

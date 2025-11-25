@@ -61,6 +61,16 @@ def get_public_config():
 @router.post("/subscribers", response_model=schemas.SubscriberResponse)
 def register_subscriber(payload: schemas.SubscriberCreate, db: Session = Depends(get_db)):
     subscription = payload.subscription
+    business = None
+    if payload.business_id is not None:
+        business = (
+            db.query(models.Business)
+            .filter(models.Business.id == payload.business_id)
+            .first()
+        )
+        if not business:
+            raise HTTPException(status_code=404, detail="Commerce associé introuvable")
+
     existing = (
         db.query(models.Subscriber)
         .filter(models.Subscriber.endpoint == subscription.endpoint)
@@ -70,6 +80,8 @@ def register_subscriber(payload: schemas.SubscriberCreate, db: Session = Depends
     if existing:
         existing.label = payload.label or existing.label
         existing.user_agent = payload.user_agent or existing.user_agent
+        if business:
+            business.subscriber = existing
         db.commit()
         db.refresh(existing)
         return existing
@@ -83,6 +95,9 @@ def register_subscriber(payload: schemas.SubscriberCreate, db: Session = Depends
         user_agent=payload.user_agent,
     )
     db.add(subscriber)
+    db.flush()
+    if business:
+        business.subscriber = subscriber
     db.commit()
     db.refresh(subscriber)
     return subscriber

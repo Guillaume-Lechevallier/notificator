@@ -67,6 +67,12 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 6. Ouvrez `http://localhost:8000/admin.html` pour gérer vos commerces et envoyer des notifications (globales ou ciblées).
 7. Ouvrez `http://localhost:8000/index.html` depuis un navigateur autorisant les notifications (HTTPS ou localhost).
 
+### Lien d'enrôlement pour un commerce
+
+- Depuis le panneau d'administration (`admin.html`), sélectionnez un commerce puis cliquez sur **« Générer un lien d'enrôlement »** dans le bloc *Informations enregistrées*.
+- Le lien généré pointe vers `index.html` et inclut les paramètres `business_id` et `business_name` pour préremplir l'inscription et associer l'abonné au commerce.
+- Partagez ce lien avec le gérant : dès qu'il valide les notifications, l'abonnement est relié au commerce et l'ID est mis à jour côté administration.
+
 ## Flux fonctionnel
 
 1. Un utilisateur s'inscrit via la page `index.html` : le navigateur enregistre un abonnement Web Push et l'envoie à `/api/subscribers`.
@@ -77,7 +83,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ## API (résumé)
 
 - `GET /api/config` : renvoie la clé publique VAPID pour s'abonner.
-- `POST /api/subscribers` : enregistre un abonnement Web Push (payload `{ subscription, label?, user_agent? }`).
+- `POST /api/subscribers` : enregistre un abonnement Web Push (payload `{ subscription, label?, user_agent?, business_id? }`). Le champ `business_id` associe automatiquement l'abonné au commerce ciblé.
 - `GET /api/subscribers` : liste les abonnés (nom + token) pour l'aperçu admin.
 - `GET /api/businesses` : liste les commerces et leurs coordonnées (nom, gérant, contact, adresse, abonné associé).
 - `POST /api/businesses` : crée un commerce.
