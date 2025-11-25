@@ -5,11 +5,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .database import Base, engine
+from .database import init_database
 from .models import HealthCheck
 from .routers import businesses, notifications
 
-Base.metadata.create_all(bind=engine)
+init_database()
 
 app = FastAPI(title="Notificator", version="0.1.0")
 

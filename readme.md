@@ -21,6 +21,8 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 docker compose up --build
 ```
 
+> Lors du démarrage, l'API applique automatiquement le contenu de `last_update.sql` sur MySQL pour aligner le schéma (colonnes Web Push, `label`, commerces, etc.). Le fichier est idempotent : il peut être exécuté plusieurs fois et garantit que la base correspond aux modèles actuels.
+
 L'API est disponible sur `http://localhost:8000` et sert aussi le frontend :
 
 - `http://localhost:8000/index.html` : inscription / réception
@@ -114,6 +116,8 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ## Base de données
 
 Le schéma MySQL est décrit dans `last_update.sql`. Si le modèle évolue, déplacer l'ancien contenu dans `last_update_old.sql` et mettre le nouveau SQL dans `last_update.sql`.
+
+L'API exécute automatiquement `last_update.sql` au démarrage pour les déploiements MySQL. Cette étape permet notamment d'ajouter la colonne `label` sur `subscribers` et de conserver les index d'unicité nécessaires pour éviter l'erreur `Unknown column 'subscribers.label' in 'field list'` lors de l'inscription. Si vous utilisez SQLite en développement, cette étape est ignorée pour rester compatible avec la syntaxe MySQL du script.
 
 ### Mise à jour 2025-11-25
 
