@@ -63,6 +63,12 @@
             <div>
               <h3>Informations enregistrées</h3>
               <div class="summary-card" id="business-summary">Choisissez un commerce pour afficher les informations existantes.</div>
+              <div class="actions">
+                <button class="ghost" id="generate-enrollment-link">🔗 Générer un lien d'enrôlement</button>
+                <button class="ghost" id="copy-enrollment-link">📋 Copier</button>
+              </div>
+              <input id="enrollment-link" type="url" placeholder="Lien d'inscription pour ce commerce" readonly />
+              <p class="meta" id="enrollment-hint">Sélectionnez un commerce pour créer un lien de partage.</p>
             </div>
             <div>
               <h3>Modifier ou ajouter</h3>
@@ -139,6 +145,11 @@
       const imageInput = document.getElementById('image-url');
       const imagePreview = document.getElementById('image-preview');
       const clickUrlInput = document.getElementById('click-url');
+      const enrollmentLinkInput = document.getElementById('enrollment-link');
+      const generateEnrollmentBtn = document.getElementById('generate-enrollment-link');
+      const copyEnrollmentBtn = document.getElementById('copy-enrollment-link');
+      const enrollmentHint = document.getElementById('enrollment-hint');
+      copyEnrollmentBtn.disabled = true;
 
       const businessForm = {
         name: document.getElementById('business-name'),
@@ -174,6 +185,26 @@
           <p><strong>Adresse :</strong> ${business.address || 'Non renseignée'}</p>
           <p><strong>ID abonné push :</strong> ${business.subscriber_id || 'Non associé'}</p>
         `;
+      }
+
+      function buildEnrollmentLink(business) {
+        const url = new URL(`${window.location.origin}/index.html`);
+        url.searchParams.set('business_id', business.id);
+        url.searchParams.set('business_name', business.name);
+        return url.toString();
+      }
+
+      function renderEnrollmentLink(business) {
+        if (!business) {
+          enrollmentLinkInput.value = '';
+          enrollmentHint.textContent = 'Sélectionnez un commerce pour créer un lien de partage.';
+          copyEnrollmentBtn.disabled = true;
+          return;
+        }
+
+        enrollmentLinkInput.value = buildEnrollmentLink(business);
+        enrollmentHint.textContent = "Partagez ce lien pour que le commerce s'inscrive aux notifications.";
+        copyEnrollmentBtn.disabled = false;
       }
 
       function populateBusinessForm(business) {
@@ -217,6 +248,40 @@
         renderBusinessList(filtered);
       }
 
+      function generateEnrollmentLink() {
+        const business = businesses.find((b) => b.id === selectedBusinessId);
+        if (!business) {
+          enrollmentLinkInput.value = '';
+          enrollmentHint.textContent = 'Sélectionnez un commerce avant de générer un lien.';
+          copyEnrollmentBtn.disabled = true;
+          businessStatus.textContent = 'Aucun commerce sélectionné pour le lien.';
+          businessStatus.style.color = '#f87171';
+          return;
+        }
+
+        renderEnrollmentLink(business);
+        businessStatus.textContent = 'Lien d\'enrôlement généré pour ce commerce';
+        businessStatus.style.color = '#34d399';
+      }
+
+      async function copyEnrollmentLink() {
+        if (!enrollmentLinkInput.value) {
+          businessStatus.textContent = 'Générez un lien avant de copier';
+          businessStatus.style.color = '#f87171';
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(enrollmentLinkInput.value);
+          businessStatus.textContent = 'Lien copié dans le presse-papiers';
+          businessStatus.style.color = '#34d399';
+        } catch (error) {
+          console.error(error);
+          businessStatus.textContent = 'Impossible de copier le lien';
+          businessStatus.style.color = '#f87171';
+        }
+      }
+
       async function fetchBusinesses() {
         const response = await fetch('/api/businesses');
         if (!response.ok) return;
@@ -239,6 +304,7 @@
         businessStatus.style.color = '#9ca3af';
         populateBusinessForm(null);
         renderBusinessSummary(null);
+        renderEnrollmentLink(null);
         highlightSelection();
       }
 
@@ -253,6 +319,7 @@
         businessStatus.textContent = 'Prêt pour modification ou envoi';
         populateBusinessForm(business);
         renderBusinessSummary(business);
+        renderEnrollmentLink(business);
         if (updateList) highlightSelection();
       }
 
@@ -356,6 +423,8 @@
       document.getElementById('send').addEventListener('click', sendNotification);
       imageInput.addEventListener('input', renderPreview);
       search.addEventListener('input', filterBusinesses);
+      generateEnrollmentBtn.addEventListener('click', generateEnrollmentLink);
+      copyEnrollmentBtn.addEventListener('click', copyEnrollmentLink);
 
       fetchHistory();
       fetchBusinesses();
