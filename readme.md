@@ -28,6 +28,21 @@ L'API est disponible sur `http://localhost:8000` et sert aussi le frontend :
 - `http://localhost:8000/index.html` : inscription / réception
 - `http://localhost:8000/admin.html` : panneau d'administration
 
+### Clés VAPID préconfigurées (développement)
+
+Pour faciliter les tests, le fichier `docker-compose.yml` définit déjà les variables
+`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` et `VAPID_CLAIM_EMAIL` avec une paire fournie :
+
+```env
+VAPID_PUBLIC_KEY=BFJYF7VW4vjhjTpt9PExNUNHC3Q4VCZ4rN9cvj15IFEK-wM2LoXHzHPja0miVp7EG6FQRyg_MGFMVFV5DAYJUL4
+VAPID_PRIVATE_KEY=VBId-1ytbTzWMfpwNolBoEjZ5xUvwLUNIObyVBxxlBE
+VAPID_CLAIM_EMAIL=mailto:moilechevallier@gmail.com
+```
+
+Elles sont utilisées par défaut au démarrage des conteneurs. Pour un déploiement en
+production, remplacez-les par vos propres clés (génération recommandée via
+`pywebpush` comme détaillé ci-dessous) afin de ne pas invalider les abonnements existants.
+
 ## Exécution locale sans Docker
 
 1. Installez les dépendances :
