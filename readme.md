@@ -134,7 +134,7 @@ L'API exécute automatiquement `last_update.sql` au démarrage pour les déploie
 ### Mise à jour 2025-11-27
 
 - Réécriture des instructions d'alignement MySQL pour éviter l'erreur de syntaxe `ADD COLUMN IF NOT EXISTS` observée au démarrage du conteneur.
-- Les ajouts de colonnes, d'index et de clés étrangères sont désormais appliqués via des instructions séparées compatibles MySQL 8.0 (`DROP ... IF EXISTS` puis `ADD ...`).
+- Les ajouts de colonnes, d'index et de clés étrangères sont désormais appliqués via des blocs préparés (`SET @sql := IF(...); PREPARE stmt FROM @sql; EXECUTE stmt;`) qui vérifient l'existence de chaque élément avant d'exécuter l'ALTER.
 - Si vous voyez une erreur `You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'IF NOT EXISTS label'`, rejouez `last_update.sql` après avoir archivé l'ancienne version dans `last_update_old.sql`.
 
 ### Mise à jour 2025-11-24
