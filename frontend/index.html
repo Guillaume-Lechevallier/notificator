@@ -78,6 +78,23 @@
       .panel h2 { margin: 0 0 8px; }
       .panel p { margin: 0 0 12px; color: var(--muted); }
 
+      .affiliation-card {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px dashed var(--border);
+        background: rgba(34, 211, 238, 0.06);
+        margin-bottom: 6px;
+      }
+
+      .affiliation-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
       label { display: block; margin: 12px 0 6px; font-weight: 600; }
 
       input, button {
@@ -99,6 +116,18 @@
         font-weight: 800;
         letter-spacing: 0.2px;
         transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+
+      button.ghost {
+        background: #0a0f1a;
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+
+      .affiliation-actions button {
+        width: auto;
+        min-width: 120px;
+        margin-top: 0;
       }
 
       button:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(14, 165, 233, 0.35); }
@@ -178,6 +207,17 @@
         <section class="panel">
           <h2>Votre session</h2>
           <p id="enrollment-info" class="status"></p>
+          <div id="affiliation-card" class="affiliation-card" style="display:none;">
+            <div id="affiliation-question" class="status" style="margin:0;">Accepter les notifications de votre commerçant ?</div>
+            <p id="affiliation-description" style="margin:0;"></p>
+            <div class="affiliation-actions">
+              <button type="button" id="accept-affiliation">Oui, activer</button>
+              <button type="button" class="ghost" id="decline-affiliation">Non</button>
+            </div>
+            <small id="affiliation-memory" style="color: var(--muted);">
+              Nous mémoriserons votre accord pour ne plus vous le redemander sur cette page.
+            </small>
+          </div>
           <form id="subscribe-form">
             <label for="label">Nom du commerce (facultatif)</label>
             <input id="label" type="text" placeholder="Boulangerie des Halles" />
@@ -226,6 +266,17 @@
       const banner = document.getElementById('banner');
       const bannerText = document.getElementById('banner-text');
       const bannerClose = document.getElementById('banner-close');
+      const affiliationCard = document.getElementById('affiliation-card');
+      const affiliationQuestion = document.getElementById('affiliation-question');
+      const affiliationDescription = document.getElementById('affiliation-description');
+      const affiliationMemory = document.getElementById('affiliation-memory');
+      const acceptAffiliationBtn = document.getElementById('accept-affiliation');
+      const declineAffiliationBtn = document.getElementById('decline-affiliation');
+
+      const ACCEPTED_BUSINESSES_KEY = 'notificator-accepted-businesses';
+      const ACCEPTED_PAGES_KEY = 'notificator-accepted-pages';
+      const LAST_BUSINESS_KEY = 'notificator-last-business';
+      const currentPageKey = `${window.location.pathname}${window.location.search}`;
 
       const urlParams = new URLSearchParams(window.location.search);
       const rawBusinessId = urlParams.get('business_id');
@@ -235,13 +286,101 @@
           : null;
       const businessName = urlParams.get('business_name');
 
+      function readStoredJson(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch (error) {
+          console.error('Impossible de lire le stockage local', error);
+          return fallback;
+        }
+      }
+
+      function writeStoredJson(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+
+      function rememberAcceptedPage(pageKey) {
+        const pages = readStoredJson(ACCEPTED_PAGES_KEY, []);
+        if (!pages.includes(pageKey)) {
+          pages.push(pageKey);
+          writeStoredJson(ACCEPTED_PAGES_KEY, pages);
+        }
+      }
+
+      function hasAcceptedPage(pageKey) {
+        const pages = readStoredJson(ACCEPTED_PAGES_KEY, []);
+        return pages.includes(pageKey);
+      }
+
+      function rememberAcceptedBusiness(businessId, name) {
+        if (!businessId) return;
+        const stored = readStoredJson(ACCEPTED_BUSINESSES_KEY, []);
+        const filtered = stored.filter((entry) => entry.businessId !== businessId);
+        filtered.push({ businessId, name, updatedAt: new Date().toISOString() });
+        writeStoredJson(ACCEPTED_BUSINESSES_KEY, filtered);
+      }
+
+      function hasAcceptedBusiness(businessId) {
+        if (!businessId) return false;
+        const stored = readStoredJson(ACCEPTED_BUSINESSES_KEY, []);
+        return stored.some((entry) => entry.businessId === businessId);
+      }
+
+      function rememberLastBusiness(businessId, name) {
+        if (!businessId && !name) return;
+        writeStoredJson(LAST_BUSINESS_KEY, { businessId, name });
+      }
+
+      function markAffiliationAccepted(displayName) {
+        if (!affiliationCard) return;
+        affiliationCard.style.display = 'grid';
+        affiliationCard.classList.add('accepted');
+        affiliationQuestion.textContent = `Notifications déjà activées pour ${displayName}`;
+        affiliationDescription.textContent =
+          'Nous avons mémorisé votre accord pour ce commerce sur cet appareil.';
+        affiliationMemory.textContent =
+          'Vous pouvez relancer une activation manuelle depuis le formulaire si nécessaire.';
+        if (acceptAffiliationBtn) {
+          acceptAffiliationBtn.textContent = 'Déjà activé';
+          acceptAffiliationBtn.disabled = true;
+        }
+      }
+
+      function hydrateAffiliationCard() {
+        if (!affiliationCard) return;
+        const displayName = businessName || 'votre commerçant';
+        const alreadyAccepted =
+          resolvedBusinessId && (hasAcceptedBusiness(resolvedBusinessId) || hasAcceptedPage(currentPageKey));
+
+        if (!resolvedBusinessId) {
+          affiliationCard.style.display = 'none';
+          return;
+        }
+
+        affiliationCard.style.display = 'grid';
+        affiliationQuestion.textContent = 'Accepter les notifications de votre commerçant ?';
+        affiliationDescription.textContent =
+          `Vous êtes invité à recevoir les notifications de ${displayName}. Dites « Oui » pour continuer.`;
+        affiliationMemory.textContent =
+          'Une fois accepté, le navigateur retiendra ce commerce et ne vous reposera plus la question.';
+
+        if (alreadyAccepted) {
+          markAffiliationAccepted(displayName);
+          statusEl.textContent = 'Notifications déjà autorisées pour ce commerce sur cet appareil.';
+          statusEl.style.color = '#34d399';
+        }
+      }
+
       if (resolvedBusinessId) {
         const displayName = businessName || 'ce commerce';
-        enrollmentInfo.textContent = `Vous allez lier cette inscription au commerce « ${displayName} » (ID ${resolvedBusinessId}).`;
+        enrollmentInfo.textContent = `Vous allez lier cette inscription au commerce « ${displayName} » (ID ${resolvedBusinessId}). Nous mémoriserons votre choix sur cet appareil.`;
         if (businessName) {
           labelInput.value = businessName;
         }
       }
+
+      hydrateAffiliationCard();
 
       function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -302,31 +441,68 @@
         tokenBadge.style.display = 'inline-flex';
         bannerText.textContent = 'Votre navigateur est maintenant inscrit et prêt à recevoir les alertes Notificator.';
         banner.style.display = 'block';
+
+        return data;
+      }
+
+      async function performSubscriptionFlow() {
+        statusEl.textContent = 'Activation en cours...';
+        statusEl.style.color = '#34d399';
+        try {
+          const data = await registerPush();
+          const displayName = businessName || labelInput.value || 'votre commerçant';
+          if (resolvedBusinessId) {
+            rememberAcceptedBusiness(resolvedBusinessId, displayName);
+            rememberLastBusiness(resolvedBusinessId, displayName);
+          }
+          rememberAcceptedPage(currentPageKey);
+          markAffiliationAccepted(displayName);
+
+          const message = resolvedBusinessId
+            ? `Inscription Web Push confirmée pour le commerce (ID ${resolvedBusinessId}). Vous pouvez fermer la page.`
+            : 'Inscription Web Push confirmée. Vous pouvez fermer la page.';
+          statusEl.textContent = message;
+          return data;
+        } catch (error) {
+          console.error(error);
+          statusEl.textContent = error.message;
+          statusEl.style.color = '#f87171';
+          throw error;
+        }
       }
 
       const subscribeForm = document.getElementById('subscribe-form');
       subscribeForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        statusEl.textContent = 'Activation en cours...';
-        statusEl.style.color = '#34d399';
-        try {
-          await registerPush();
-          const message = resolvedBusinessId
-            ? `Inscription Web Push confirmée pour le commerce (ID ${resolvedBusinessId}). Vous pouvez fermer la page.`
-            : 'Inscription Web Push confirmée. Vous pouvez fermer la page.';
-          statusEl.textContent = message;
-        } catch (error) {
-          console.error(error);
-          statusEl.textContent = error.message;
-          statusEl.style.color = '#f87171';
-        }
+        await performSubscriptionFlow();
       });
+
+      if (acceptAffiliationBtn) {
+        acceptAffiliationBtn.addEventListener('click', () => performSubscriptionFlow());
+      }
+
+      if (declineAffiliationBtn) {
+        declineAffiliationBtn.addEventListener('click', () => {
+          statusEl.textContent = 'Vous pourrez activer les notifications plus tard depuis cette même page.';
+          statusEl.style.color = '#9ca3af';
+          if (affiliationCard) {
+            affiliationCard.classList.add('declined');
+          }
+        });
+      }
 
       const existingToken = localStorage.getItem('deviceToken');
       if (existingToken) {
         tokenBadge.textContent = `Token : ${existingToken}`;
         tokenBadge.style.display = 'inline-flex';
         statusEl.textContent = 'Session Web Push déjà active.';
+        if (resolvedBusinessId) {
+          const displayName = businessName || labelInput.value || 'votre commerçant';
+          rememberAcceptedBusiness(resolvedBusinessId, displayName);
+          rememberAcceptedPage(currentPageKey);
+          rememberLastBusiness(resolvedBusinessId, displayName);
+          markAffiliationAccepted(displayName);
+        }
       }
 
       bannerClose.addEventListener('click', () => {

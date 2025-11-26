@@ -48,7 +48,8 @@
       }
 
       .app-shell {
-        width: min(1240px, calc(100vw - 32px));
+        width: min(1140px, calc(100vw - 32px));
+        max-width: 100%;
         margin: 0 auto;
         padding: clamp(28px, 4vw, 38px) clamp(18px, 3vw, 28px) 96px;
       }
@@ -112,7 +113,7 @@
 
       .grid {
         display: grid;
-        grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+        grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
         gap: 18px;
         align-items: start;
       }
@@ -364,7 +365,9 @@
               </div>
               <div class="metric">
                 <strong>Partager l'inscription</strong>
-                <p class="meta">Générez un lien unique pour lier un nouvel abonné à ce commerce.</p>
+                <p class="meta">
+                  Générez un lien unique pour lier un nouvel abonné à ce commerce et mémoriser son accord dans le navigateur.
+                </p>
                 <div class="actions" style="margin-top: 8px;">
                   <button class="ghost" id="generate-enrollment-link">🔗 Créer le lien</button>
                   <button class="ghost" id="copy-enrollment-link">📋 Copier</button>
@@ -641,7 +644,8 @@
         }
 
         enrollmentLinkInput.value = buildEnrollmentLink(business);
-        enrollmentHint.textContent = "Partagez ce lien pour que le commerce s'inscrive aux notifications.";
+        enrollmentHint.textContent =
+          "Partagez ce lien : la page affichera un Oui/Non simple, enregistrera le commerce et ne reposera plus la question sur cet appareil.";
         copyEnrollmentBtn.disabled = false;
       }
 
