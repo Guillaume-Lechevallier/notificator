@@ -26,6 +26,7 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - En cas d'accord, la page enregistre automatiquement l'identifiant du commerce, l'URL d'inscription et le dernier commerce utilisé dans le `localStorage` (`notificator-accepted-businesses`, `notificator-accepted-pages`, `notificator-last-business`) pour ne plus redemander l'autorisation sur cet appareil.
 - L'interface d'administration a été recentrée pour éviter tout contenu rogné sur la droite tout en conservant la largeur fluide.
 - Le message d'enrôlement est désormais éditable depuis l'admin : le champ « Message d'invitation » met à jour le texte affiché sur `index.html`, qui se réduit à une question Oui/Non (refus = redirection Google, accord = activation des notifications comme auparavant).
+- Si un visiteur revient sur un lien d'inscription déjà accepté pour un commerce, il est automatiquement redirigé vers la dernière notification publiée pour ce commerce.
 
 ## Prérequis
 
@@ -166,6 +167,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 - `GET /api/businesses` : liste les commerces et leurs coordonnées (nom, gérant, contact, adresse, abonné associé).
 - `POST /api/businesses` : crée un commerce.
 - `PUT /api/businesses/{id}` : met à jour un commerce existant.
+- `GET /api/businesses/{id}/notifications/latest` : renvoie la dernière notification associée à un commerce pour permettre la redirection automatique après enrôlement.
 - `GET /api/notifications` : liste les notifications envoyées.
 - `POST /api/notifications` : crée une notification (payload `{ title, body?, image_url?, click_url?, business_id? }`). Si `business_id` est présent, l'envoi est limité à l'abonné du commerce.
 - `GET /api/push/{device_token}` et endpoints associés restent disponibles pour compatibilité / suivi de livraisons.
