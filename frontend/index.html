@@ -126,6 +126,7 @@
       const ACCEPTED_PAGES_KEY = 'notificator-accepted-pages';
       const LAST_BUSINESS_KEY = 'notificator-last-business';
       const currentPageKey = `${window.location.pathname}${window.location.search}`;
+      let redirectInProgress = false;
 
       const urlParams = new URLSearchParams(window.location.search);
       const rawBusinessId = urlParams.get('business_id');
@@ -187,6 +188,43 @@
         statusEl.classList.remove('positive', 'negative');
         if (tone === 'positive') statusEl.classList.add('positive');
         if (tone === 'negative') statusEl.classList.add('negative');
+      }
+
+      function resolveNotificationUrl(notification) {
+        if (!notification) return null;
+        if (notification.click_url) return notification.click_url;
+
+        const params = new URLSearchParams();
+        if (notification.image_url) params.set('image', notification.image_url);
+        if (notification.title) params.set('title', notification.title);
+        if (notification.body) params.set('body', notification.body);
+
+        const query = params.toString();
+        return query ? `/notification.html?${query}` : '/notification.html';
+      }
+
+      async function redirectToLatestNotification(businessId, displayName) {
+        if (!businessId || redirectInProgress) return;
+        redirectInProgress = true;
+
+        try {
+          setStatus(
+            `Notifications déjà activées pour ${displayName}. Redirection vers la dernière alerte...`,
+            'positive'
+          );
+          const response = await fetch(`/api/businesses/${businessId}/notifications/latest`);
+          if (!response.ok) {
+            return;
+          }
+
+          const notification = await response.json();
+          const targetUrl = resolveNotificationUrl(notification);
+          if (targetUrl) {
+            window.location.href = targetUrl;
+          }
+        } catch (error) {
+          console.error('Impossible de récupérer la dernière notification', error);
+        }
       }
 
       async function loadPrompt() {
@@ -291,12 +329,13 @@
         businessLabel.style.display = 'inline-flex';
       }
 
-      function hydrateAcceptance() {
+      async function hydrateAcceptance() {
         const pageAccepted = hasAcceptedPage(currentPageKey);
         if (resolvedBusinessId) {
           if (hasAcceptedBusiness(resolvedBusinessId) || pageAccepted) {
             const displayName = businessName || 'votre commerçant';
             markAccepted(displayName);
+            await redirectToLatestNotification(resolvedBusinessId, displayName);
           }
           return;
         }
@@ -315,7 +354,7 @@
       (async function init() {
         hydrateBusinessBadge();
         await loadPrompt();
-        hydrateAcceptance();
+        await hydrateAcceptance();
       })();
     </script>
   </body>
