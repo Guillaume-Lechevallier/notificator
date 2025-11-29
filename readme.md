@@ -152,6 +152,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
   - **« Appeler »** : cochez la case puis renseignez le numéro à composer ; le bouton appelle `tel:+33...` sur la page.
   - **« Voir l'adresse »** : cochez la case puis indiquez l'adresse complète ; le bouton ouvre Google Maps avec l'itinéraire depuis la position actuelle vers cette destination.
 - Les paramètres sont transmis uniquement si les cases correspondantes sont cochées. Vous pouvez préremplir numéro et adresse en sélectionnant un commerce : les champs reprennent les coordonnées stockées.
+- Si aucune image n'est fournie dans l'URL, `notification.html` tente désormais de charger automatiquement la dernière image téléversée (endpoint `/api/uploads/latest`) avant de revenir au fond dégradé.
 
 ## Flux fonctionnel
 
@@ -164,6 +165,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 - `GET /api/config` : renvoie la clé publique VAPID pour s'abonner.
 - `POST /api/subscribers` : enregistre un abonnement Web Push (payload `{ subscription, label?, user_agent?, business_id? }`). Le champ `business_id` associe automatiquement l'abonné au commerce ciblé.
+- `GET /api/uploads/latest` : renvoie l'URL de la dernière image déposée via l'admin pour proposer un visuel par défaut.
 - `GET /api/settings/enrollment_prompt` / `PUT /api/settings/enrollment_prompt` : lit ou met à jour le message d'invitation affiché sur la page d'enrôlement.
 - `GET /api/businesses` : liste les commerces et leurs coordonnées (nom, gérant, contact, adresse, abonné associé).
 - `POST /api/businesses` : crée un commerce.

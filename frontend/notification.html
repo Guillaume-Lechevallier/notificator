@@ -119,6 +119,7 @@
       const bodyEl = document.getElementById('body');
       const callButton = document.getElementById('call-button');
       const mapButton = document.getElementById('map-button');
+      const fallbackBackground = 'linear-gradient(135deg, #0b1220, #111827)';
 
       const payload = {
         image: params.get('image') || '',
@@ -128,13 +129,47 @@
         address: params.get('address'),
       };
 
-      function hydrate() {
+      function setBackground(url) {
+        hero.style.backgroundImage = url ? `url(${url})` : fallbackBackground;
+      }
+
+      function preloadImage(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(url);
+          img.onerror = () => reject(new Error('Failed to load image'));
+          img.src = url;
+        });
+      }
+
+      async function hydrateBackground() {
         if (payload.image) {
-          hero.style.backgroundImage = `url(${payload.image})`;
-        } else {
-          hero.style.backgroundImage = 'linear-gradient(135deg, #0b1220, #111827)';
+          try {
+            const validated = await preloadImage(payload.image);
+            setBackground(validated);
+            return;
+          } catch (error) {
+            console.warn('Image transmise invalide, utilisation du dernier upload connu.', error);
+          }
         }
 
+        try {
+          const response = await fetch('/api/uploads/latest');
+          if (!response.ok) throw new Error('Aucun upload disponible');
+
+          const data = await response.json();
+          const validated = await preloadImage(data.url);
+          payload.image = validated;
+          setBackground(validated);
+          return;
+        } catch (error) {
+          console.warn('Impossible de récupérer le dernier upload, fallback par défaut utilisé.', error);
+        }
+
+        setBackground('');
+      }
+
+      function hydrateContent() {
         if (payload.title) titleEl.textContent = payload.title;
         if (payload.body) bodyEl.textContent = payload.body;
 
@@ -154,7 +189,8 @@
         }
       }
 
-      hydrate();
+      hydrateBackground();
+      hydrateContent();
     </script>
   </body>
 </html>
