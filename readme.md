@@ -8,6 +8,7 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - `frontend/` : pages statiques (inscription et administration) + service worker.
 - `admin.html` propose désormais une gestion des commerces (fiche détaillée + envoi ciblé) avec une console repensée (grilles, métriques et aperçu de la landing page).
 - `notification.html` reprend automatiquement le thème clair/sombre et met en avant les boutons « Appeler » et « Voir l'adresse ».
+- `notification.html` est désormais mobile-first : carte épinglée en bas, boutons côte à côte et fond uniquement basé sur l'image sans sélecteur de thème.
 - `last_update.sql` : script SQL à exécuter sur MySQL pour provisionner les tables (Web Push, abonnés, notifications, livraisons).
 - `docker-compose.yml` : lance MySQL et l'API sur le port 8000.
  - Gestion explicite des contenus longs dans l'interface admin (wrap automatique pour les URLs et coordonnées afin d'éviter tout débordement horizontal).
