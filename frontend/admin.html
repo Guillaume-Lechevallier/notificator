@@ -48,7 +48,7 @@
       }
 
       .app-shell {
-        width: min(1140px, calc(100vw - 32px));
+        width: min(1080px, calc(100vw - 36px));
         max-width: 100%;
         margin: 0 auto;
         padding: clamp(28px, 4vw, 38px) clamp(18px, 3vw, 28px) 96px;
@@ -113,8 +113,8 @@
 
       .grid {
         display: grid;
-        grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-        gap: 18px;
+        grid-template-columns: minmax(248px, 300px) minmax(0, 1fr);
+        gap: 16px;
         align-items: start;
       }
 
@@ -311,7 +311,7 @@
         border: 1px solid var(--panel-border);
       }
 
-      @media (max-width: 1180px) { .grid { grid-template-columns: 1fr; } }
+      @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
       @media (max-width: 640px) {
         .hero-actions { flex-direction: column; align-items: flex-start; }
         .link-preview { flex-direction: column; align-items: flex-start; }
