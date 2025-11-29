@@ -56,6 +56,14 @@ CREATE TABLE IF NOT EXISTS health_checks (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS settings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    `key` VARCHAR(150) NOT NULL UNIQUE,
+    `value` TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Alignement conditionnel des installations existantes
 SET @schema_name := DATABASE();
 
@@ -68,6 +76,12 @@ SET @sql := (
     )
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+INSERT INTO settings (`key`, `value`)
+SELECT 'enrollment_prompt', 'Activer les alertes de votre commerçant ?'
+WHERE NOT EXISTS (
+    SELECT 1 FROM settings WHERE `key` = 'enrollment_prompt'
+);
 
 SET @sql := (
     SELECT IF(

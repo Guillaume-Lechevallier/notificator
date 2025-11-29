@@ -102,3 +102,15 @@ class DeliveryList(BaseModel):
 
 class UploadResponse(BaseModel):
     url: str
+
+
+class SettingResponse(BaseModel):
+    key: str
+    value: str
+
+    class Config:
+        orm_mode = True
+
+
+class SettingUpdate(BaseModel):
+    value: str
