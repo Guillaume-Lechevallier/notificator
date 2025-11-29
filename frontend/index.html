@@ -3,120 +3,89 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Notificator · Inscription</title>
+    <title>Notificator · Enrôlement</title>
     <style>
       :root {
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        --bg: radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.16), transparent 30%),
-          radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.16), transparent 28%),
+        --bg: radial-gradient(circle at 15% 20%, rgba(34, 211, 238, 0.12), transparent 28%),
+          radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.12), transparent 30%),
           #060910;
         --panel: #0e1524;
         --border: #1f2937;
-        --muted: #9ca3af;
         --text: #e5e7eb;
+        --muted: #9ca3af;
         --accent: #22d3ee;
         --positive: #34d399;
         color-scheme: dark;
       }
 
+      * { box-sizing: border-box; }
+
       body {
         margin: 0;
         min-height: 100vh;
+        display: grid;
+        place-items: center;
         background: var(--bg);
         color: var(--text);
-        overflow-x: hidden;
+        padding: 24px;
       }
 
-      .page {
-        width: min(960px, calc(100vw - 32px));
-        margin: 0 auto;
-        padding: clamp(32px, 4vw, 48px) clamp(18px, 3vw, 22px) 96px;
+      .card {
+        width: min(520px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: clamp(22px, 4vw, 32px);
         display: grid;
-        gap: 16px;
-      }
-
-      header {
-        display: grid;
-        gap: 10px;
-        margin-bottom: 10px;
+        gap: 18px;
+        text-align: center;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
       }
 
       .eyebrow {
+        margin: 0;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
         padding: 8px 12px;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
         border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.06);
         color: var(--muted);
         width: fit-content;
-        font-size: 14px;
+        justify-self: center;
       }
 
       h1 {
         margin: 0;
-        font-size: clamp(28px, 4vw, 38px);
+        font-size: clamp(24px, 4vw, 32px);
       }
 
-      header p { margin: 0; color: var(--muted); max-width: 760px; }
-
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 16px;
-      }
-
-      .panel {
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 22px;
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
-      }
-
-      .panel h2 { margin: 0 0 8px; }
-      .panel p { margin: 0 0 12px; color: var(--muted); }
-
-      .affiliation-card {
-        display: grid;
-        gap: 10px;
-        padding: 14px;
-        border-radius: 14px;
-        border: 1px dashed var(--border);
-        background: rgba(34, 211, 238, 0.06);
-        margin-bottom: 6px;
-      }
-
-      .affiliation-actions {
+      .actions {
         display: flex;
-        gap: 10px;
+        gap: 12px;
+        justify-content: center;
         flex-wrap: wrap;
-        align-items: center;
-      }
-
-      label { display: block; margin: 12px 0 6px; font-weight: 600; }
-
-      input, button {
-        width: 100%;
-        padding: 12px 14px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: #0a0f1a;
-        color: var(--text);
-        font-size: 16px;
-        box-sizing: border-box;
       }
 
       button {
-        background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+        padding: 12px 18px;
+        border-radius: 12px;
         border: none;
-        margin-top: 14px;
-        cursor: pointer;
+        font-size: 16px;
         font-weight: 800;
+        cursor: pointer;
+        min-width: 140px;
+        background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+        color: #0b1220;
         letter-spacing: 0.2px;
         transition: transform 0.12s ease, box-shadow 0.12s ease;
       }
+
+      button:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(14, 165, 233, 0.35); }
+      button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
 
       button.ghost {
         background: #0a0f1a;
@@ -124,154 +93,34 @@
         border: 1px solid var(--border);
       }
 
-      .affiliation-actions button {
-        width: auto;
-        min-width: 120px;
-        margin-top: 0;
+      .status {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+        min-height: 20px;
       }
 
-      button:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(14, 165, 233, 0.35); }
-
-      .status { color: var(--positive); font-weight: 600; margin-top: 8px; }
-
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(34, 211, 238, 0.1);
-        color: #67e8f9;
-        padding: 8px 12px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        font-weight: 700;
-      }
-
-      .steps {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 12px;
-        margin-top: 14px;
-      }
-
-      .step {
-        padding: 14px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: #0a0f1a;
-      }
-
-      .callout {
-        display: grid;
-        gap: 8px;
-        border-radius: 14px;
-        border: 1px dashed var(--border);
-        padding: 14px;
-        background: rgba(255, 255, 255, 0.04);
-      }
-
-      .notification-banner {
-        position: fixed;
-        bottom: 16px;
-        right: 16px;
-        left: 16px;
-        max-width: 520px;
-        margin: 0 auto;
-        background: #0e1524;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 16px;
-        display: none;
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-      }
-
-      .notification-banner h3 { margin: 0 0 8px; }
-      .notification-banner button { width: auto; margin-top: 0; }
-
-      @media (max-width: 640px) {
-        .page { padding: 36px 18px 80px; }
-      }
+      .status.positive { color: var(--positive); }
+      .status.negative { color: #f87171; }
     </style>
   </head>
   <body>
-    <div class="page">
-      <header>
-        <div class="eyebrow">Inscription Web Push</div>
-        <h1>Activez les alertes Notificator</h1>
-        <p>
-          Une fois les notifications autorisées, le service worker diffusera les messages même si l'onglet est fermé.
-          Les informations commerciales saisies sont liées automatiquement au commerce ciblé.
-        </p>
-      </header>
-
-      <div class="layout">
-        <section class="panel">
-          <h2>Votre session</h2>
-          <p id="enrollment-info" class="status"></p>
-          <div id="affiliation-card" class="affiliation-card" style="display:none;">
-            <div id="affiliation-question" class="status" style="margin:0;">Accepter les notifications de votre commerçant ?</div>
-            <p id="affiliation-description" style="margin:0;"></p>
-            <div class="affiliation-actions">
-              <button type="button" id="accept-affiliation">Oui, activer</button>
-              <button type="button" class="ghost" id="decline-affiliation">Non</button>
-            </div>
-            <small id="affiliation-memory" style="color: var(--muted);">
-              Nous mémoriserons votre accord pour ne plus vous le redemander sur cette page.
-            </small>
-          </div>
-          <form id="subscribe-form">
-            <label for="label">Nom du commerce (facultatif)</label>
-            <input id="label" type="text" placeholder="Boulangerie des Halles" />
-            <button type="submit">Activer les notifications Web Push</button>
-          </form>
-          <p id="subscription-status" class="status"></p>
-          <div id="device-token" class="badge" style="display:none;"></div>
-        </section>
-
-        <section class="panel">
-          <h2>Comment ça marche ?</h2>
-          <p>Quelques étapes pour vérifier que la configuration est correcte.</p>
-          <div class="steps">
-            <div class="step">
-              <strong>1. Autorisation</strong>
-              <p class="status" style="color: var(--muted);">Acceptez la demande de notification du navigateur.</p>
-            </div>
-            <div class="step">
-              <strong>2. Enrôlement</strong>
-              <p class="status" style="color: var(--muted);">Le service worker enregistre l'abonnement Web Push.</p>
-            </div>
-            <div class="step">
-              <strong>3. Liaison commerce</strong>
-              <p class="status" style="color: var(--muted);">Le commerce est associé via le lien d'inscription partagé.</p>
-            </div>
-          </div>
-          <div class="callout">
-            <strong>Conseil</strong>
-            <span>Sur mobile, vérifiez aussi les autorisations de notifications système pour votre navigateur.</span>
-          </div>
-        </section>
+    <main class="card">
+      <p id="business-label" class="eyebrow" style="display:none;"></p>
+      <h1 id="prompt-text">Activer les alertes de votre commerçant ?</h1>
+      <div class="actions">
+        <button id="accept-btn" type="button">Oui</button>
+        <button id="decline-btn" class="ghost" type="button">Non</button>
       </div>
-    </div>
-
-    <div class="notification-banner" id="banner" role="status" aria-live="polite">
-      <h3>Notifications prêtes</h3>
-      <p id="banner-text" style="color: var(--muted); margin: 0 0 12px;"></p>
-      <button type="button" id="banner-close">Fermer</button>
-    </div>
+      <p id="status" class="status" aria-live="polite"></p>
+    </main>
 
     <script>
-      const statusEl = document.getElementById('subscription-status');
-      const tokenBadge = document.getElementById('device-token');
-      const labelInput = document.getElementById('label');
-      const enrollmentInfo = document.getElementById('enrollment-info');
-      const banner = document.getElementById('banner');
-      const bannerText = document.getElementById('banner-text');
-      const bannerClose = document.getElementById('banner-close');
-      const affiliationCard = document.getElementById('affiliation-card');
-      const affiliationQuestion = document.getElementById('affiliation-question');
-      const affiliationDescription = document.getElementById('affiliation-description');
-      const affiliationMemory = document.getElementById('affiliation-memory');
-      const acceptAffiliationBtn = document.getElementById('accept-affiliation');
-      const declineAffiliationBtn = document.getElementById('decline-affiliation');
+      const promptText = document.getElementById('prompt-text');
+      const businessLabel = document.getElementById('business-label');
+      const statusEl = document.getElementById('status');
+      const acceptBtn = document.getElementById('accept-btn');
+      const declineBtn = document.getElementById('decline-btn');
 
       const ACCEPTED_BUSINESSES_KEY = 'notificator-accepted-businesses';
       const ACCEPTED_PAGES_KEY = 'notificator-accepted-pages';
@@ -285,6 +134,7 @@
           ? Number(rawBusinessId)
           : null;
       const businessName = urlParams.get('business_name');
+      const DEFAULT_PROMPT = 'Activer les alertes de votre commerçant ?';
 
       function readStoredJson(key, fallback) {
         try {
@@ -332,55 +182,23 @@
         writeStoredJson(LAST_BUSINESS_KEY, { businessId, name });
       }
 
-      function markAffiliationAccepted(displayName) {
-        if (!affiliationCard) return;
-        affiliationCard.style.display = 'grid';
-        affiliationCard.classList.add('accepted');
-        affiliationQuestion.textContent = `Notifications déjà activées pour ${displayName}`;
-        affiliationDescription.textContent =
-          'Nous avons mémorisé votre accord pour ce commerce sur cet appareil.';
-        affiliationMemory.textContent =
-          'Vous pouvez relancer une activation manuelle depuis le formulaire si nécessaire.';
-        if (acceptAffiliationBtn) {
-          acceptAffiliationBtn.textContent = 'Déjà activé';
-          acceptAffiliationBtn.disabled = true;
-        }
+      function setStatus(message, tone = 'muted') {
+        statusEl.textContent = message || '';
+        statusEl.classList.remove('positive', 'negative');
+        if (tone === 'positive') statusEl.classList.add('positive');
+        if (tone === 'negative') statusEl.classList.add('negative');
       }
 
-      function hydrateAffiliationCard() {
-        if (!affiliationCard) return;
-        const displayName = businessName || 'votre commerçant';
-        const alreadyAccepted =
-          resolvedBusinessId && (hasAcceptedBusiness(resolvedBusinessId) || hasAcceptedPage(currentPageKey));
-
-        if (!resolvedBusinessId) {
-          affiliationCard.style.display = 'none';
-          return;
-        }
-
-        affiliationCard.style.display = 'grid';
-        affiliationQuestion.textContent = 'Accepter les notifications de votre commerçant ?';
-        affiliationDescription.textContent =
-          `Vous êtes invité à recevoir les notifications de ${displayName}. Dites « Oui » pour continuer.`;
-        affiliationMemory.textContent =
-          'Une fois accepté, le navigateur retiendra ce commerce et ne vous reposera plus la question.';
-
-        if (alreadyAccepted) {
-          markAffiliationAccepted(displayName);
-          statusEl.textContent = 'Notifications déjà autorisées pour ce commerce sur cet appareil.';
-          statusEl.style.color = '#34d399';
+      async function loadPrompt() {
+        try {
+          const response = await fetch('/api/settings/enrollment_prompt');
+          if (!response.ok) throw new Error('fallback');
+          const data = await response.json();
+          promptText.textContent = data.value || DEFAULT_PROMPT;
+        } catch (error) {
+          promptText.textContent = DEFAULT_PROMPT;
         }
       }
-
-      if (resolvedBusinessId) {
-        const displayName = businessName || 'ce commerce';
-        enrollmentInfo.textContent = `Vous allez lier cette inscription au commerce « ${displayName} » (ID ${resolvedBusinessId}). Nous mémoriserons votre choix sur cet appareil.`;
-        if (businessName) {
-          labelInput.value = businessName;
-        }
-      }
-
-      hydrateAffiliationCard();
 
       function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -420,7 +238,7 @@
 
         const body = {
           subscription: sub.toJSON(),
-          label: labelInput.value || null,
+          label: businessName || null,
           user_agent: navigator.userAgent,
           business_id: resolvedBusinessId,
         };
@@ -437,77 +255,68 @@
 
         const data = await response.json();
         localStorage.setItem('deviceToken', data.device_token);
-        tokenBadge.textContent = `Token : ${data.device_token}`;
-        tokenBadge.style.display = 'inline-flex';
-        bannerText.textContent = 'Votre navigateur est maintenant inscrit et prêt à recevoir les alertes Notificator.';
-        banner.style.display = 'block';
-
         return data;
       }
 
+      function markAccepted(displayName) {
+        acceptBtn.disabled = true;
+        setStatus(`Notifications déjà activées pour ${displayName}.`, 'positive');
+      }
+
       async function performSubscriptionFlow() {
-        statusEl.textContent = 'Activation en cours...';
-        statusEl.style.color = '#34d399';
+        setStatus('Activation en cours...', 'positive');
         try {
           const data = await registerPush();
-          const displayName = businessName || labelInput.value || 'votre commerçant';
+          const displayName = businessName || 'votre commerçant';
           if (resolvedBusinessId) {
             rememberAcceptedBusiness(resolvedBusinessId, displayName);
             rememberLastBusiness(resolvedBusinessId, displayName);
           }
           rememberAcceptedPage(currentPageKey);
-          markAffiliationAccepted(displayName);
-
-          const message = resolvedBusinessId
-            ? `Inscription Web Push confirmée pour le commerce (ID ${resolvedBusinessId}). Vous pouvez fermer la page.`
-            : 'Inscription Web Push confirmée. Vous pouvez fermer la page.';
-          statusEl.textContent = message;
+          markAccepted(displayName);
           return data;
         } catch (error) {
           console.error(error);
-          statusEl.textContent = error.message;
-          statusEl.style.color = '#f87171';
+          setStatus(error.message, 'negative');
           throw error;
         }
       }
 
-      const subscribeForm = document.getElementById('subscribe-form');
-      subscribeForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        await performSubscriptionFlow();
-      });
-
-      if (acceptAffiliationBtn) {
-        acceptAffiliationBtn.addEventListener('click', () => performSubscriptionFlow());
+      function hydrateBusinessBadge() {
+        if (!businessName && !resolvedBusinessId) return;
+        const labelParts = [];
+        if (businessName) labelParts.push(businessName);
+        if (resolvedBusinessId) labelParts.push(`ID ${resolvedBusinessId}`);
+        businessLabel.textContent = labelParts.join(' · ');
+        businessLabel.style.display = 'inline-flex';
       }
 
-      if (declineAffiliationBtn) {
-        declineAffiliationBtn.addEventListener('click', () => {
-          statusEl.textContent = 'Vous pourrez activer les notifications plus tard depuis cette même page.';
-          statusEl.style.color = '#9ca3af';
-          if (affiliationCard) {
-            affiliationCard.classList.add('declined');
-          }
-        });
-      }
-
-      const existingToken = localStorage.getItem('deviceToken');
-      if (existingToken) {
-        tokenBadge.textContent = `Token : ${existingToken}`;
-        tokenBadge.style.display = 'inline-flex';
-        statusEl.textContent = 'Session Web Push déjà active.';
+      function hydrateAcceptance() {
+        const pageAccepted = hasAcceptedPage(currentPageKey);
         if (resolvedBusinessId) {
-          const displayName = businessName || labelInput.value || 'votre commerçant';
-          rememberAcceptedBusiness(resolvedBusinessId, displayName);
-          rememberAcceptedPage(currentPageKey);
-          rememberLastBusiness(resolvedBusinessId, displayName);
-          markAffiliationAccepted(displayName);
+          if (hasAcceptedBusiness(resolvedBusinessId) || pageAccepted) {
+            const displayName = businessName || 'votre commerçant';
+            markAccepted(displayName);
+          }
+          return;
+        }
+
+        if (pageAccepted) {
+          markAccepted('Notificator');
         }
       }
 
-      bannerClose.addEventListener('click', () => {
-        banner.style.display = 'none';
+      acceptBtn.addEventListener('click', () => performSubscriptionFlow());
+      declineBtn.addEventListener('click', () => {
+        setStatus('Redirection vers Google...', 'muted');
+        window.location.href = 'https://www.google.com';
       });
+
+      (async function init() {
+        hydrateBusinessBadge();
+        await loadPrompt();
+        hydrateAcceptance();
+      })();
     </script>
   </body>
 </html>
