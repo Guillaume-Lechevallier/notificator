@@ -118,6 +118,13 @@
         align-items: start;
       }
 
+      .grid > *,
+      .actions > *,
+      .link-preview > *,
+      .pill-grid > * {
+        min-width: 0;
+      }
+
       .panel {
         background: var(--panel);
         border: 1px solid var(--panel-border);
@@ -174,6 +181,7 @@
         background: var(--surface);
         cursor: pointer;
         transition: border-color 0.1s ease, transform 0.1s ease;
+        word-break: break-word;
       }
 
       .list li:hover { border-color: var(--link); transform: translateY(-1px); }
@@ -229,6 +237,7 @@
         border-radius: 12px;
         background: var(--surface);
         border: 1px dashed var(--panel-border);
+        word-break: break-word;
       }
 
       .input-inline {
@@ -266,6 +275,22 @@
 
       .link-preview small { color: var(--muted); display: block; }
       .link-preview a { word-break: break-all; font-weight: 600; color: var(--link); }
+
+      .pill,
+      .badge,
+      .meta,
+      label,
+      input,
+      textarea,
+      select,
+      .history-card,
+      .tag,
+      .actions,
+      .pill-grid,
+      .input-inline,
+      .link-preview {
+        overflow-wrap: anywhere;
+      }
 
       .history {
         display: grid;

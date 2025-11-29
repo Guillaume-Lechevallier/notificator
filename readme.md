@@ -10,6 +10,7 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - `notification.html` reprend automatiquement le thème clair/sombre et met en avant les boutons « Appeler » et « Voir l'adresse ».
 - `last_update.sql` : script SQL à exécuter sur MySQL pour provisionner les tables (Web Push, abonnés, notifications, livraisons).
 - `docker-compose.yml` : lance MySQL et l'API sur le port 8000.
+ - Gestion explicite des contenus longs dans l'interface admin (wrap automatique pour les URLs et coordonnées afin d'éviter tout débordement horizontal).
 
 ## Nouveautés UI (2025-12-04)
 
