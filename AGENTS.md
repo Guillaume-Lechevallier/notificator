@@ -29,6 +29,10 @@
 - L'interface admin propose un thème clair/sombre (persisté via `localStorage`) partagé avec `notification.html`. Ne supprimez pas le sélecteur et privilégiez les variables CSS pour ajuster les couleurs.
 - Les liens de destination sont construits vers `notification.html` avec les paramètres `image`, `title`, `body` et, si les cases sont cochées côté administration, `call` (tel:...) et `address` (Google Maps itinéraire).
 
+- 2025-12-10 : la largeur du panneau admin est plafonnée à `min(1080px, calc(100vw - 36px))` avec une grille plus étroite pour éviter tout débordement horizontal. Préservez cette limite lors des ajustements UI.
+
+- 2025-12-14 : pour éviter les débordements liés aux champs (URL longues, coordonnées détaillées), gardez le wrapping forcé sur les cartes, badges, listes, historiques et sur les conteneurs flex/grille (min-width: 0 + overflow-wrap:anywhere).
+
 - 2025-12-04 : Refonte front complète (admin/index/notification). Conserver les identifiants de formulaire/sections afin de garder la compatibilité avec le JS inline et les routes existantes.
 - Prévisualisation rapide sans MySQL : `DATABASE_URL=sqlite:///./dev.db uvicorn backend.main:app --host 0.0.0.0 --port 8000` (le script `last_update.sql` est ignoré en SQLite, utile pour les captures d'écran front).
 - Les pages admin/index partagent le même thème clair/sombre (clé `notificator-theme`) : toute évolution UI doit continuer à synchroniser ce stockage local avec `notification.html`.
