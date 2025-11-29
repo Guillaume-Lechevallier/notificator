@@ -17,6 +17,7 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - Page d'inscription modernisée : timeline d'onboarding, badge de token et callout mobile.
 - Landing page alignée visuellement (overlay, boutons mis en avant, synchronisation du thème clair/sombre avec l'admin).
 - Largeurs fluides (admin/index) pour éviter tout recadrage sur les écrans étroits et conserver le contenu dans le viewport.
+- Calibrage de la largeur du panneau admin pour supprimer le débordement horizontal et conserver une marge respirable sur les écrans moyens.
 
 ## Expérience d'enrôlement simplifiée
 
