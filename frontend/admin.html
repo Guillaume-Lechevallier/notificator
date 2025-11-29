@@ -400,6 +400,21 @@
                 <input id="enrollment-link" type="url" placeholder="Lien d'inscription généré ici" readonly />
                 <p class="meta" id="enrollment-hint">Sélectionnez un commerce pour créer un lien de partage.</p>
               </div>
+              <div class="metric">
+                <strong>Message d'invitation</strong>
+                <p class="meta">Personnalisez la question affichée sur la page d'enrôlement.</p>
+                <input
+                  id="enrollment-prompt"
+                  type="text"
+                  placeholder="Activer les alertes de votre commerçant ?"
+                  maxlength="180"
+                  aria-label="Message d'invitation"
+                />
+                <div class="actions" style="margin-top: 8px; align-items: center; gap: 12px; flex-wrap: wrap;">
+                  <button class="primary" id="save-enrollment-prompt" type="button">💬 Mettre à jour</button>
+                  <span class="meta" id="enrollment-prompt-status">Synchro avec la page d'inscription.</span>
+                </div>
+              </div>
             </div>
 
             <div class="stack" style="margin-top: 12px;">
@@ -542,6 +557,9 @@
       const generateEnrollmentBtn = document.getElementById('generate-enrollment-link');
       const copyEnrollmentBtn = document.getElementById('copy-enrollment-link');
       const enrollmentHint = document.getElementById('enrollment-hint');
+      const enrollmentPromptInput = document.getElementById('enrollment-prompt');
+      const enrollmentPromptStatus = document.getElementById('enrollment-prompt-status');
+      const saveEnrollmentPromptBtn = document.getElementById('save-enrollment-prompt');
       copyEnrollmentBtn.disabled = true;
 
       const businessForm = {
@@ -759,6 +777,62 @@
         }
       }
 
+      async function loadEnrollmentPrompt() {
+        if (!enrollmentPromptInput) return;
+        enrollmentPromptStatus.textContent = 'Chargement du message...';
+        enrollmentPromptStatus.style.color = '#9ca3af';
+        try {
+          const response = await fetch('/api/settings/enrollment_prompt');
+          if (!response.ok) throw new Error();
+          const data = await response.json();
+          enrollmentPromptInput.value = data.value || '';
+          enrollmentPromptStatus.textContent = 'Message synchronisé avec la page d\'enrôlement.';
+          enrollmentPromptStatus.style.color = '#9ca3af';
+        } catch (error) {
+          enrollmentPromptStatus.textContent = 'Impossible de charger le message actuel';
+          enrollmentPromptStatus.style.color = '#f87171';
+        }
+      }
+
+      async function saveEnrollmentPrompt() {
+        if (!enrollmentPromptInput) return;
+        const value = enrollmentPromptInput.value.trim();
+        if (!value) {
+          enrollmentPromptStatus.textContent = 'Le message ne peut pas être vide';
+          enrollmentPromptStatus.style.color = '#f87171';
+          return;
+        }
+
+        saveEnrollmentPromptBtn.disabled = true;
+        enrollmentPromptStatus.textContent = 'Enregistrement...';
+        enrollmentPromptStatus.style.color = '#9ca3af';
+
+        try {
+          const response = await fetch('/api/settings/enrollment_prompt', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            const message = error?.detail || 'Erreur lors de la mise à jour du message';
+            throw new Error(message);
+          }
+
+          const data = await response.json();
+          enrollmentPromptInput.value = data.value;
+          enrollmentPromptStatus.textContent = 'Message mis à jour avec succès.';
+          enrollmentPromptStatus.style.color = '#34d399';
+        } catch (error) {
+          console.error(error);
+          enrollmentPromptStatus.textContent = error.message;
+          enrollmentPromptStatus.style.color = '#f87171';
+        } finally {
+          saveEnrollmentPromptBtn.disabled = false;
+        }
+      }
+
       async function fetchBusinesses() {
         const response = await fetch('/api/businesses');
         if (!response.ok) return;
@@ -930,10 +1004,12 @@
       search.addEventListener('input', filterBusinesses);
       generateEnrollmentBtn.addEventListener('click', generateEnrollmentLink);
       copyEnrollmentBtn.addEventListener('click', copyEnrollmentLink);
+      saveEnrollmentPromptBtn.addEventListener('click', saveEnrollmentPrompt);
 
       applyTheme();
       renderPreview();
       syncLandingLink();
+      loadEnrollmentPrompt();
       fetchHistory();
       fetchBusinesses();
     </script>

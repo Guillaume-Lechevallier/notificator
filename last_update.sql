@@ -56,6 +56,14 @@ CREATE TABLE IF NOT EXISTS health_checks (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS settings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    `key` VARCHAR(150) NOT NULL UNIQUE,
+    `value` TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Alignement conditionnel des installations existantes
 SET @schema_name := DATABASE();
 
@@ -65,6 +73,23 @@ SET @sql := (
         EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema=@schema_name AND table_name='subscribers' AND column_name='label'),
         'DO 0',
         'ALTER TABLE subscribers ADD COLUMN label VARCHAR(120) NULL AFTER device_token'
+    )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- Insertion du message d'enrôlement par défaut si absent
+SET @default_setting_key := 'enrollment_prompt';
+SET @default_setting_value := 'Activer les alertes de votre commerçant ?';
+SET @sql := (
+    SELECT IF(
+        EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_schema=@schema_name AND table_name='settings'
+        ) AND EXISTS (
+            SELECT 1 FROM settings WHERE `key` = @default_setting_key
+        ),
+        'DO 0',
+        CONCAT('INSERT INTO settings (`key`, `value`) VALUES (''', @default_setting_key, ''', ''', @default_setting_value, '''')')
     )
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

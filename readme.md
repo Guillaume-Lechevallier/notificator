@@ -25,6 +25,7 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - Le lien généré depuis `admin.html` affiche un bloc convivial « Accepter les notifications de votre commerçant ? » avec des boutons Oui/Non.
 - En cas d'accord, la page enregistre automatiquement l'identifiant du commerce, l'URL d'inscription et le dernier commerce utilisé dans le `localStorage` (`notificator-accepted-businesses`, `notificator-accepted-pages`, `notificator-last-business`) pour ne plus redemander l'autorisation sur cet appareil.
 - L'interface d'administration a été recentrée pour éviter tout contenu rogné sur la droite tout en conservant la largeur fluide.
+- Le message d'enrôlement est désormais éditable depuis l'admin : le champ « Message d'invitation » met à jour le texte affiché sur `index.html`, qui se réduit à une question Oui/Non (refus = redirection Google, accord = activation des notifications comme auparavant).
 
 ## Prérequis
 
@@ -161,6 +162,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 - `GET /api/config` : renvoie la clé publique VAPID pour s'abonner.
 - `POST /api/subscribers` : enregistre un abonnement Web Push (payload `{ subscription, label?, user_agent?, business_id? }`). Le champ `business_id` associe automatiquement l'abonné au commerce ciblé.
+- `GET /api/settings/enrollment_prompt` / `PUT /api/settings/enrollment_prompt` : lit ou met à jour le message d'invitation affiché sur la page d'enrôlement.
 - `GET /api/businesses` : liste les commerces et leurs coordonnées (nom, gérant, contact, adresse, abonné associé).
 - `POST /api/businesses` : crée un commerce.
 - `PUT /api/businesses/{id}` : met à jour un commerce existant.
