@@ -77,22 +77,11 @@ SET @sql := (
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Insertion du message d'enrôlement par défaut si absent
-SET @default_setting_key := 'enrollment_prompt';
-SET @default_setting_value := 'Activer les alertes de votre commerçant ?';
-SET @sql := (
-    SELECT IF(
-        EXISTS (
-            SELECT 1 FROM information_schema.tables
-            WHERE table_schema=@schema_name AND table_name='settings'
-        ) AND EXISTS (
-            SELECT 1 FROM settings WHERE `key` = @default_setting_key
-        ),
-        'DO 0',
-        CONCAT('INSERT INTO settings (`key`, `value`) VALUES (''', @default_setting_key, ''', ''', @default_setting_value, '''')')
-    )
+INSERT INTO settings (`key`, `value`)
+SELECT 'enrollment_prompt', 'Activer les alertes de votre commerçant ?'
+WHERE NOT EXISTS (
+    SELECT 1 FROM settings WHERE `key` = 'enrollment_prompt'
 );
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @sql := (
     SELECT IF(

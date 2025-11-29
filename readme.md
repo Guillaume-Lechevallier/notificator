@@ -211,6 +211,10 @@ L'API exécute automatiquement `last_update.sql` au démarrage pour les déploie
 - L'unicité sur `subscribers.endpoint` est supprimée afin de permettre plusieurs inscriptions pour un même navigateur (plusieurs liens d'inscription / commerces). Un index non unique est conservé pour les recherches.
 - `POST /api/subscribers` accepte désormais plusieurs enregistrements par endpoint : chaque commerce peut donc être enrôlé avec le même navigateur sans blocage.
 
+### Mise à jour 2025-12-19
+
+- `last_update.sql` insère désormais le paramètre `enrollment_prompt` via un `INSERT ... WHERE NOT EXISTS` afin d'éviter les erreurs SQL au démarrage MySQL liées au SQL dynamique. Rejouez le script si le message d'enrôlement n'est pas présent dans la table `settings` sur une base existante.
+
 ### Mise à jour 2025-11-24
 
 - Une colonne `click_url` est désormais obligatoire pour enregistrer les liens de redirection des notifications.
