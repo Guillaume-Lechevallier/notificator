@@ -156,6 +156,28 @@ def upload_image(file: UploadFile = File(...)):
     return {"url": f"/uploads/{filename}"}
 
 
+@router.get("/uploads/latest", response_model=schemas.UploadResponse)
+def get_latest_upload():
+    if not UPLOAD_DIR.exists():
+        raise HTTPException(status_code=404, detail="Aucune image téléversée trouvée")
+
+    try:
+        uploads = [
+            path
+            for path in UPLOAD_DIR.iterdir()
+            if path.is_file()
+            and mimetypes.guess_type(path.name)[0] in ALLOWED_IMAGE_TYPES
+        ]
+    except OSError:
+        raise HTTPException(status_code=500, detail="Impossible d'accéder aux images téléversées")
+
+    if not uploads:
+        raise HTTPException(status_code=404, detail="Aucune image téléversée trouvée")
+
+    latest = max(uploads, key=lambda path: path.stat().st_mtime)
+    return {"url": f"/uploads/{latest.name}"}
+
+
 @router.post("/subscribers", response_model=schemas.SubscriberResponse)
 def register_subscriber(payload: schemas.SubscriberCreate, db: Session = Depends(get_db)):
     subscription = payload.subscription
