@@ -43,3 +43,7 @@
 - 2025-12-06 : Le lien d'inscription affiche une étape Oui/Non (« Accepter les notifications de votre commerçant ? ») et mémorise l'acceptation dans le `localStorage` (`notificator-accepted-businesses`, `notificator-accepted-pages`, `notificator-last-business`). Préserver cette mémorisation pour éviter de redemander l'autorisation sur un appareil déjà validé.
 - 2025-12-18 : le texte d'enrôlement est géré via la table `settings` (clé `enrollment_prompt`) et l'endpoint `/api/settings/enrollment_prompt`. La page `index.html` se limite à cette question avec deux boutons : Oui déclenche l'inscription Web Push, Non redirige vers google.com.
 - 2025-12-19 : `last_update.sql` insère désormais le paramètre `enrollment_prompt` via un `INSERT ... WHERE NOT EXISTS` (idempotent, sans SQL dynamique) pour éviter les erreurs MySQL au démarrage. Rejouez le script si le message d'enrôlement manque dans la table `settings`.
+
+## Note de déploiement (2025-12-21)
+
+- Le `readme.md` documente désormais une démo pas-à-pas de déploiement via Docker Compose (MySQL + backend + frontend). Gardez ce walkthrough en phase avec `docker-compose.yml` (ports, variables VAPID, commande `docker compose logs -f app`).
