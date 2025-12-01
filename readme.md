@@ -58,6 +58,50 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 Le script `last_update.sql` est ignoré en SQLite, mais les tables sont créées automatiquement via SQLAlchemy pour permettre la navigation.
 
+## Démo de déploiement pas-à-pas (Docker Compose)
+
+Cette démonstration reproduit un déploiement complet (base MySQL + API + frontend) sur une machine locale ou un serveur éphémère.
+
+1. **Cloner le dépôt**
+
+   ```bash
+   git clone https://github.com/<votre-organisation>/notificator.git
+   cd notificator
+   ```
+
+2. **Configurer les variables sensibles**
+
+   - Les clés VAPID de développement sont déjà préremplies dans `docker-compose.yml` ; remplacez-les par vos clés pour un déploiement réel.
+   - Ajoutez au besoin un fichier `.env` chargé automatiquement par Docker Compose :
+
+     ```env
+     VAPID_PUBLIC_KEY=...           # clé publique générée via pywebpush
+     VAPID_PRIVATE_KEY=...          # clé privée associée
+     VAPID_CLAIM_EMAIL=mailto:you@example.com
+     DATABASE_URL=mysql+mysqlconnector://notificator:notificator@db:3306/notificator
+     ```
+
+3. **Construire et lancer la pile**
+
+   ```bash
+   docker compose up --build -d
+   docker compose logs -f app  # attendre "Application startup complete"
+   ```
+
+4. **Valider l'API et le frontend**
+
+   - API : `curl http://localhost:8000/api/config` doit retourner la clé publique VAPID.
+   - Frontend :
+     - `http://localhost:8000/index.html` pour l'enrôlement Oui/Non.
+     - `http://localhost:8000/admin.html` pour envoyer une notification (pensez à générer un lien d'inscription si besoin).
+
+5. **Nettoyer ou mettre à jour**
+
+   - Arrêt : `docker compose down` (ajoutez `-v` pour purger le volume MySQL si vous voulez repartir de zéro).
+   - Mise à jour applicative : `git pull` puis `docker compose up --build -d` pour reconstruire l'image backend et livrer le frontend à jour.
+
+> Lors du premier démarrage, `last_update.sql` est appliqué automatiquement sur MySQL pour aligner le schéma (colonnes Web Push, commerces, message d'invitation, etc.). Le script est idempotent : il peut être rejoué après mise à jour de l'image.
+
 ### Clés VAPID préconfigurées (développement)
 
 Pour faciliter les tests, le fichier `docker-compose.yml` définit déjà les variables
