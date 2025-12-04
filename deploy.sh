@@ -33,8 +33,15 @@ log() {
 install_packages() {
   log "Installation des paquets système (Apache, Certbot, Python, MySQL)..."
   export DEBIAN_FRONTEND=noninteractive
+  dpkg --configure -a || true
   apt-get update -y
-  apt-get install -y apache2 python3-venv python3-pip git mysql-server python3-certbot-apache rsync
+  if ! apt-get install -y apache2 python3-venv python3-pip git mysql-server python3-certbot-apache rsync; then
+    log "L'installation des paquets a échoué. Tentative de réparation (dpkg --configure -a && apt-get -f install)..."
+    dpkg --configure -a || true
+    apt-get -f install -y || true
+    log "Corrigez les paquets cassés (voir /var/log/dpkg.log) puis relancez le script."
+    exit 1
+  fi
   a2enmod proxy proxy_http headers rewrite ssl >/dev/null
 }
 

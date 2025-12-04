@@ -76,6 +76,8 @@ Le script :
 - crée un service systemd `notificator.service` (uvicorn 0.0.0.0:8000) ;
 - configure un VirtualHost Apache pointant vers l'API et déclenche Certbot (`--redirect` automatiquement si le DNS pointe vers le serveur).
 
+> Si l'installation des paquets échoue avec un message `dpkg returned an error code (1)`, exécutez `sudo dpkg --configure -a && sudo apt-get -f install`, puis relancez `deploy.sh`. Le script embarque désormais cette tentative de réparation automatiquement et s'arrête si des paquets restent cassés.
+
 Variables optionnelles avant l'exécution :
 
 - `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
