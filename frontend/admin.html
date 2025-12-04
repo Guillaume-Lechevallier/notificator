@@ -276,6 +276,23 @@
       .link-preview small { color: var(--muted); display: block; }
       .link-preview a { word-break: break-all; font-weight: 600; color: var(--link); }
 
+      .qr-preview {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 14px;
+        border: 1px dashed var(--panel-border);
+        border-radius: 14px;
+        background: var(--surface);
+        min-height: 160px;
+      }
+
+      .qr-preview svg {
+        width: 100%;
+        max-width: 220px;
+        height: auto;
+      }
+
       .pill,
       .badge,
       .meta,
@@ -396,9 +413,13 @@
                 <div class="actions" style="margin-top: 8px;">
                   <button class="ghost" id="generate-enrollment-link">🔗 Créer le lien</button>
                   <button class="ghost" id="copy-enrollment-link">📋 Copier</button>
+                  <button class="ghost" id="download-enrollment-qr" disabled>⬇️ QR (SVG)</button>
                 </div>
                 <input id="enrollment-link" type="url" placeholder="Lien d'inscription généré ici" readonly />
                 <p class="meta" id="enrollment-hint">Sélectionnez un commerce pour créer un lien de partage.</p>
+                <div class="qr-preview" id="enrollment-qr-preview">
+                  <p class="meta" style="margin: 0;">Générez le lien pour afficher le QR code prêt à imprimer.</p>
+                </div>
               </div>
               <div class="metric">
                 <strong>Message d'invitation</strong>
@@ -557,6 +578,8 @@
       const generateEnrollmentBtn = document.getElementById('generate-enrollment-link');
       const copyEnrollmentBtn = document.getElementById('copy-enrollment-link');
       const enrollmentHint = document.getElementById('enrollment-hint');
+      const downloadEnrollmentQrBtn = document.getElementById('download-enrollment-qr');
+      const enrollmentQrPreview = document.getElementById('enrollment-qr-preview');
       const enrollmentPromptInput = document.getElementById('enrollment-prompt');
       const enrollmentPromptStatus = document.getElementById('enrollment-prompt-status');
       const saveEnrollmentPromptBtn = document.getElementById('save-enrollment-prompt');
@@ -578,6 +601,7 @@
       const landingPreviewLink = document.getElementById('landing-preview');
       const themeToggle = document.getElementById('theme-toggle');
 
+      let enrollmentQrSvg = '';
       let businesses = [];
       let selectedBusinessId = null;
 
@@ -671,6 +695,45 @@
         `;
       }
 
+      function resetEnrollmentQr(message = 'Générez le lien pour afficher le QR code prêt à imprimer.') {
+        enrollmentQrSvg = '';
+        downloadEnrollmentQrBtn.disabled = true;
+        enrollmentQrPreview.innerHTML = `<p class="meta" style="margin: 0;">${message}</p>`;
+      }
+
+      async function updateEnrollmentQr(link) {
+        if (!link) {
+          resetEnrollmentQr('Sélectionnez un commerce avant de partager le QR code.');
+          return;
+        }
+
+        enrollmentQrPreview.innerHTML = '<p class="meta" style="margin: 0;">Création du QR code...</p>';
+        downloadEnrollmentQrBtn.disabled = true;
+        enrollmentQrSvg = '';
+
+        try {
+          const response = await fetch(`/api/qrcodes/enrollment?url=${encodeURIComponent(link)}`);
+          if (!response.ok) throw new Error();
+
+          const svgText = await response.text();
+          enrollmentQrSvg = svgText;
+          enrollmentQrPreview.innerHTML = svgText;
+
+          const svgElement = enrollmentQrPreview.querySelector('svg');
+          if (svgElement) {
+            svgElement.setAttribute('role', 'img');
+            svgElement.setAttribute('aria-label', "QR code d'inscription");
+          }
+
+          downloadEnrollmentQrBtn.disabled = false;
+          enrollmentHint.textContent =
+            'Partagez le QR ou le lien : le visiteur affichera la question Oui/Non avant de valider le commerce.';
+        } catch (error) {
+          console.error(error);
+          resetEnrollmentQr("Impossible de générer le QR code. Réessayez après avoir vérifié l'URL.");
+        }
+      }
+
       function buildEnrollmentLink(business) {
         const url = new URL(`${window.location.origin}/index.html`);
         url.searchParams.set('business_id', business.id);
@@ -678,11 +741,12 @@
         return url.toString();
       }
 
-      function renderEnrollmentLink(business) {
+      async function renderEnrollmentLink(business) {
         if (!business) {
           enrollmentLinkInput.value = '';
           enrollmentHint.textContent = 'Sélectionnez un commerce pour créer un lien de partage.';
           copyEnrollmentBtn.disabled = true;
+          resetEnrollmentQr();
           return;
         }
 
@@ -690,6 +754,7 @@
         enrollmentHint.textContent =
           "Partagez ce lien : la page affichera un Oui/Non simple, enregistrera le commerce et ne reposera plus la question sur cet appareil.";
         copyEnrollmentBtn.disabled = false;
+        await updateEnrollmentQr(enrollmentLinkInput.value);
       }
 
       function populateBusinessForm(business) {
@@ -743,7 +808,7 @@
         renderBusinessList(filtered);
       }
 
-      function generateEnrollmentLink() {
+      async function generateEnrollmentLink() {
         const business = businesses.find((b) => b.id === selectedBusinessId);
         if (!business) {
           enrollmentLinkInput.value = '';
@@ -754,7 +819,7 @@
           return;
         }
 
-        renderEnrollmentLink(business);
+        await renderEnrollmentLink(business);
         businessStatus.textContent = "Lien d'enrôlement généré pour ce commerce";
         businessStatus.style.color = '#34d399';
       }
@@ -775,6 +840,36 @@
           businessStatus.textContent = 'Impossible de copier le lien';
           businessStatus.style.color = '#f87171';
         }
+      }
+
+      function downloadEnrollmentQr() {
+        if (!enrollmentQrSvg || !enrollmentLinkInput.value) {
+          businessStatus.textContent = 'Générez un lien avant de télécharger le QR code';
+          businessStatus.style.color = '#f87171';
+          return;
+        }
+
+        const blob = new Blob([enrollmentQrSvg], { type: 'image/svg+xml' });
+        const downloadUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        const business = businesses.find((b) => b.id === selectedBusinessId);
+        const slugifiedName = business?.name
+          ? business.name
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '')
+          : 'notificator';
+
+        anchor.href = downloadUrl;
+        anchor.download = `inscription-${slugifiedName || 'notificator'}.svg`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(downloadUrl);
+
+        businessStatus.textContent = 'QR code téléchargé en SVG';
+        businessStatus.style.color = '#34d399';
       }
 
       async function loadEnrollmentPrompt() {
@@ -841,7 +936,7 @@
         if (selectedBusinessId) {
           const existing = businesses.find((b) => b.id === selectedBusinessId);
           if (existing) {
-            selectBusiness(existing.id, false);
+            await selectBusiness(existing.id, false);
           } else {
             resetBusinessForm();
           }
@@ -859,7 +954,7 @@
         highlightSelection();
       }
 
-      function selectBusiness(id, updateList = true) {
+      async function selectBusiness(id, updateList = true) {
         const business = businesses.find((b) => b.id === id);
         if (!business) {
           resetBusinessForm();
@@ -871,7 +966,7 @@
         businessStatus.style.color = '#34d399';
         populateBusinessForm(business);
         renderBusinessSummary(business);
-        renderEnrollmentLink(business);
+        await renderEnrollmentLink(business);
         if (updateList) highlightSelection();
       }
 
@@ -1004,6 +1099,7 @@
       search.addEventListener('input', filterBusinesses);
       generateEnrollmentBtn.addEventListener('click', generateEnrollmentLink);
       copyEnrollmentBtn.addEventListener('click', copyEnrollmentLink);
+      downloadEnrollmentQrBtn.addEventListener('click', downloadEnrollmentQr);
       saveEnrollmentPromptBtn.addEventListener('click', saveEnrollmentPrompt);
 
       applyTheme();

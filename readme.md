@@ -9,9 +9,10 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - `admin.html` propose désormais une gestion des commerces (fiche détaillée + envoi ciblé) avec une console repensée (grilles, métriques et aperçu de la landing page).
 - `notification.html` reprend automatiquement le thème clair/sombre et met en avant les boutons « Appeler » et « Voir l'adresse ».
 - `notification.html` est désormais mobile-first : carte épinglée en bas, boutons côte à côte et fond uniquement basé sur l'image sans sélecteur de thème.
+- La console admin propose un QR code SVG téléchargeable pour le lien d'inscription de chaque commerce (idéal pour l'affichage en boutique).
 - `last_update.sql` : script SQL à exécuter sur MySQL pour provisionner les tables (Web Push, abonnés, notifications, livraisons).
 - `docker-compose.yml` : lance MySQL et l'API sur le port 8000.
- - Gestion explicite des contenus longs dans l'interface admin (wrap automatique pour les URLs et coordonnées afin d'éviter tout débordement horizontal).
+- Gestion explicite des contenus longs dans l'interface admin (wrap automatique pour les URLs et coordonnées afin d'éviter tout débordement horizontal).
 
 ## Nouveautés UI (2025-12-04)
 
@@ -250,6 +251,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 - `GET /api/notifications` : liste les notifications envoyées.
 - `POST /api/notifications` : crée une notification (payload `{ title, body?, image_url?, click_url?, business_id? }`). Si `business_id` est présent, l'envoi est limité à l'abonné du commerce.
 - `GET /api/push/{device_token}` et endpoints associés restent disponibles pour compatibilité / suivi de livraisons.
+- `GET /api/qrcodes/enrollment?url=<lien>` : retourne en SVG le QR code du lien d'inscription, utilisé par l'admin pour proposer un téléchargement prêt à imprimer.
 
 ## Base de données
 

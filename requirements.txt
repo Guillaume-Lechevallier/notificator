@@ -6,3 +6,4 @@ pydantic==1.10.17
 python-multipart==0.0.9
 pywebpush==2.0.0
 cryptography==42.0.8
+segno==1.6.1
