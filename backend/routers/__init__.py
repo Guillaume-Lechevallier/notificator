@@ -1,3 +1,3 @@
-from . import businesses, notifications
+from . import businesses, notifications, qrcodes
 
-__all__ = ["notifications", "businesses"]
+__all__ = ["notifications", "businesses", "qrcodes"]

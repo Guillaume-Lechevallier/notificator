@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .database import init_database
 from .models import HealthCheck
-from .routers import businesses, notifications, settings
+from .routers import businesses, notifications, qrcodes, settings
 
 init_database()
 
@@ -23,6 +23,7 @@ app.add_middleware(
 
 app.include_router(notifications.router)
 app.include_router(businesses.router)
+app.include_router(qrcodes.router)
 app.include_router(settings.router)
 
 frontend_path = Path(__file__).resolve().parent.parent / "frontend"

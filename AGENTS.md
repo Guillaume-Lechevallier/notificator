@@ -31,6 +31,7 @@
 - L'interface admin propose un thème clair/sombre (persisté via `localStorage`) partagé avec `notification.html`. Ne supprimez pas le sélecteur et privilégiez les variables CSS pour ajuster les couleurs.
 - L'interface admin propose un thème clair/sombre (persisté via `localStorage`) partagé avec `notification.html`. Ne supprimez pas le sélecteur et privilégiez les variables CSS pour ajuster les couleurs. La landing `notification.html` reste toutefois en mode unique (fond image sans overlay, carte en bas, boutons côte à côte) conformément au dernier besoin utilisateur : ne réintroduisez pas de toggle de thème sur cette page.
 - Les liens de destination sont construits vers `notification.html` avec les paramètres `image`, `title`, `body` et, si les cases sont cochées côté administration, `call` (tel:...) et `address` (Google Maps itinéraire).
+- 2026-01-02 : l'admin propose un QR code SVG pour le lien d'inscription (bouton « QR (SVG) »). Le SVG est généré via l'endpoint `/api/qrcodes/enrollment` (librairie Python `segno`). Préservez le téléchargement et l'aperçu côté admin lorsque vous touchez à cette zone.
 
 - 2025-12-10 : la largeur du panneau admin est plafonnée à `min(1080px, calc(100vw - 36px))` avec une grille plus étroite pour éviter tout débordement horizontal. Préservez cette limite lors des ajustements UI.
 
