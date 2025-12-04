@@ -58,6 +58,38 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 Le script `last_update.sql` est ignoré en SQLite, mais les tables sont créées automatiquement via SQLAlchemy pour permettre la navigation.
 
+## Déploiement Ubuntu (Apache + Certbot)
+
+Un script d'installation est fourni pour automatiser un déploiement complet sur un serveur Ubuntu (Apache en reverse proxy + base MySQL locale + certificat Let's Encrypt).
+
+```bash
+sudo ./deploy.sh voxteck.com
+```
+
+Le script :
+
+- installe Apache, Certbot, MySQL, Python (venv) et rsync ;
+- synchronise le code dans `/opt/notificator` ;
+- crée l'environnement virtuel Python et installe `requirements.txt` ;
+- provisionne MySQL avec la base `notificator` (ou valeurs `DB_NAME/DB_USER/DB_PASSWORD` existantes) ;
+- écrit le fichier d'environnement `/etc/notificator.env` (variables VAPID optionnelles) ;
+- crée un service systemd `notificator.service` (uvicorn 0.0.0.0:8000) ;
+- configure un VirtualHost Apache pointant vers l'API et déclenche Certbot (`--redirect` automatiquement si le DNS pointe vers le serveur).
+
+> Si l'installation des paquets échoue avec un message `dpkg returned an error code (1)`, exécutez `sudo dpkg --configure -a && sudo apt-get -f install`, puis relancez `deploy.sh`. Le script embarque désormais cette tentative de réparation automatiquement et s'arrête si des paquets restent cassés.
+
+Variables optionnelles avant l'exécution :
+
+- `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_CLAIM_EMAIL`
+- `ADMIN_EMAIL` (utilisé par Certbot)
+
+Une fois le script terminé :
+
+- `systemctl status notificator.service` vérifie l'API ;
+- `journalctl -u notificator.service -f` affiche les logs ;
+- l'application est accessible sur `https://<domaine>` (ou `http://` si le certificat n'a pas encore été provisionné).
+
 ## Démo de déploiement pas-à-pas (Docker Compose)
 
 Cette démonstration reproduit un déploiement complet (base MySQL + API + frontend) sur une machine locale ou un serveur éphémère.
