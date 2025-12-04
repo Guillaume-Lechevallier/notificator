@@ -47,3 +47,5 @@
 ## Note de déploiement (2025-12-21)
 
 - Le `readme.md` documente désormais une démo pas-à-pas de déploiement via Docker Compose (MySQL + backend + frontend). Gardez ce walkthrough en phase avec `docker-compose.yml` (ports, variables VAPID, commande `docker compose logs -f app`).
+- Un script `deploy.sh` automatise l'installation sur Ubuntu (Apache + Certbot + MySQL + systemd + synchronisation du dépôt dans `/opt/notificator`). Mettez-le à jour en même temps que les instructions du `readme.md` et vérifiez qu'il reste idempotent.
+- Pour tester rapidement le front/back après une modification, lancez `DATABASE_URL=sqlite:///./dev.db uvicorn backend.main:app --host 0.0.0.0 --port 8000` depuis la racine : le frontend statique est servi par FastAPI. Les captures d'écran peuvent être faites à partir de `http://localhost:8000/index.html`.
