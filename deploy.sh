@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 if [[ ${EUID} -ne 0 ]]; then
@@ -28,6 +29,28 @@ ENV_FILE="/etc/${APP_NAME}.env"
 
 log() {
   echo -e "[deploy] $1"
+}
+
+stop_containers() {
+  log "Arrêt des conteneurs Docker en cours (sécurité avant déploiement)..."
+
+  if ! command -v docker >/dev/null 2>&1; then
+    log "Docker n'est pas installé, aucune action nécessaire."
+    return
+  fi
+
+  if command -v docker compose >/dev/null 2>&1 && [[ -f "${REPO_DIR}/docker-compose.yml" ]]; then
+    docker compose -f "${REPO_DIR}/docker-compose.yml" down >/dev/null 2>&1 || \
+      log "Impossible d'arrêter le stack docker-compose (déjà stoppé ?)."
+  fi
+
+  running_containers=$(docker ps -q 2>/dev/null || true)
+  if [[ -n "${running_containers}" ]]; then
+    docker stop ${running_containers} >/dev/null 2>&1 || true
+    log "Conteneurs Docker arrêtés."
+  else
+    log "Aucun conteneur Docker actif."
+  fi
 }
 
 install_packages() {
@@ -155,6 +178,7 @@ final_message() {
   echo "- Site : http://${DOMAIN} (sera redirigé en HTTPS si le certificat est actif)"
 }
 
+stop_containers
 install_packages
 sync_sources
 setup_venv

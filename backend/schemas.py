@@ -85,6 +85,12 @@ class NotificationResponse(BaseModel):
         orm_mode = True
 
 
+class NotificationSendResponse(NotificationResponse):
+    delivered_count: int
+    failed_count: int
+    total_recipients: int
+
+
 class DeliveryResponse(BaseModel):
     id: int
     status: str
