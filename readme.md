@@ -315,6 +315,7 @@ L'API exécute automatiquement `last_update.sql` au démarrage pour les déploie
 ## Dépannage
 
 - `TypeError: webpush() got an unexpected keyword argument 'vapid_public_key'` : à partir de pywebpush 2.0, la fonction `webpush` n'accepte plus ce paramètre. Assurez-vous que l'appel utilise uniquement `vapid_private_key` et `vapid_claims`.
+- Erreur lors de la génération du QR code d'inscription : certaines versions de `segno` renvoient le SVG en bytes. L'endpoint `/api/qrcodes/enrollment` capture maintenant le rendu dans un `io.BytesIO` puis le décode en UTF-8 pour éviter le `TypeError` et rester compatible avec les variantes de la librairie.
 
 ## Agent
 
