@@ -261,7 +261,7 @@ def get_latest_notification_for_business(
     return notification
 
 
-@router.post("/notifications", response_model=schemas.NotificationResponse)
+@router.post("/notifications", response_model=schemas.NotificationSendResponse)
 def send_notification(payload: schemas.NotificationCreate, db: Session = Depends(get_db)):
     business = None
     subscribers: list[models.Subscriber]
@@ -290,6 +290,8 @@ def send_notification(payload: schemas.NotificationCreate, db: Session = Depends
     db.flush()
 
     vapid = _get_vapid_settings()
+    delivered_count = 0
+    failed_count = 0
     for subscriber in subscribers:
         delivery = models.Delivery(
             notification=notification,
@@ -300,12 +302,23 @@ def send_notification(payload: schemas.NotificationCreate, db: Session = Depends
             _send_push(subscriber, notification, vapid)
             delivery.status = "delivered"
             delivery.delivered_at = datetime.utcnow()
+            delivered_count += 1
         except WebPushException:
             delivery.status = "failed"
+            failed_count += 1
+        except Exception:
+            delivery.status = "failed"
+            failed_count += 1
 
     db.commit()
     db.refresh(notification)
-    return notification
+    return schemas.NotificationSendResponse.from_orm(notification).copy(
+        update={
+            "delivered_count": delivered_count,
+            "failed_count": failed_count,
+            "total_recipients": len(subscribers),
+        }
+    )
 
 
 @router.get("/push/{device_token}", response_model=schemas.DeliveryList)

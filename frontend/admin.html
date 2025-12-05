@@ -1067,8 +1067,17 @@
           return;
         }
 
-        status.textContent = selectedBusinessId ? 'Notification envoyée à ce commerce' : 'Notification envoyée';
-        status.style.color = '#34d399';
+        const result = await response.json();
+        const delivered = Number(result.delivered_count || 0);
+        const failed = Number(result.failed_count || 0);
+        const total = Number(result.total_recipients || 0);
+        const successPart = delivered ? `${delivered} livraison${delivered > 1 ? 's' : ''} réussie${delivered > 1 ? 's' : ''}` : null;
+        const failedPart = failed ? `${failed} échec${failed > 1 ? 's' : ''}` : null;
+        const parts = [successPart, failedPart].filter(Boolean);
+        const prefix = selectedBusinessId ? 'Notification ciblée envoyée' : 'Notification envoyée';
+        const detail = parts.length ? ` (${parts.join(', ')} / ${total || delivered + failed} destinataire${(total || delivered + failed) > 1 ? 's' : ''})` : '';
+        status.textContent = `${prefix}${detail}`;
+        status.style.color = failed ? '#f59e0b' : '#34d399';
         await fetchHistory();
       }
 

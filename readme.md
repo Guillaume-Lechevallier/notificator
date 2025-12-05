@@ -7,6 +7,7 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 - `backend/` : API FastAPI, modèles SQLAlchemy et configuration de la base de données.
 - `frontend/` : pages statiques (inscription et administration) + service worker.
 - `admin.html` propose désormais une gestion des commerces (fiche détaillée + envoi ciblé) avec une console repensée (grilles, métriques et aperçu de la landing page).
+- L'accès à `admin.html` est protégé par une authentification HTTP Basic : définissez `ADMIN_USERNAME` / `ADMIN_PASSWORD` (par défaut `admin` / `changeme`).
 - `notification.html` reprend automatiquement le thème clair/sombre et met en avant les boutons « Appeler » et « Voir l'adresse ».
 - `notification.html` est désormais mobile-first : carte épinglée en bas, boutons côte à côte et fond uniquement basé sur l'image sans sélecteur de thème.
 - La console admin propose un QR code SVG téléchargeable pour le lien d'inscription de chaque commerce (idéal pour l'affichage en boutique).
@@ -41,6 +42,13 @@ Application de notifications Web Push avec un backend Python (FastAPI), un front
 docker compose up --build
 ```
 
+L'interface d'administration demande désormais des identifiants (HTTP Basic) avant d'afficher `admin.html` :
+
+- `ADMIN_USERNAME` : identifiant (défaut `admin`)
+- `ADMIN_PASSWORD` : mot de passe (défaut `changeme`)
+
+Renseignez-les dans votre environnement ou dans le fichier de service (`/etc/notificator.env`) avant de lancer l'application.
+
 > Lors du démarrage, l'API applique automatiquement le contenu de `last_update.sql` sur MySQL pour aligner le schéma (colonnes Web Push, `label`, commerces, etc.). Le fichier est idempotent : il peut être exécuté plusieurs fois et garantit que la base correspond aux modèles actuels.
 
 L'API est disponible sur `http://localhost:8000` et sert aussi le frontend :
@@ -69,6 +77,7 @@ sudo ./deploy.sh voxteck.com
 
 Le script :
 
+- arrête préventivement les conteneurs Docker en cours (stack docker-compose + conteneurs restants) pour éviter les conflits de ports ;
 - installe Apache, Certbot, MySQL, Python (venv) et rsync ;
 - synchronise le code dans `/opt/notificator` ;
 - crée l'environnement virtuel Python et installe `requirements.txt` ;
@@ -249,7 +258,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000
 - `PUT /api/businesses/{id}` : met à jour un commerce existant.
 - `GET /api/businesses/{id}/notifications/latest` : renvoie la dernière notification associée à un commerce pour permettre la redirection automatique après enrôlement.
 - `GET /api/notifications` : liste les notifications envoyées.
-- `POST /api/notifications` : crée une notification (payload `{ title, body?, image_url?, click_url?, business_id? }`). Si `business_id` est présent, l'envoi est limité à l'abonné du commerce.
+- `POST /api/notifications` : crée une notification (payload `{ title, body?, image_url?, click_url?, business_id? }`). Si `business_id` est présent, l'envoi est limité à l'abonné du commerce. La réponse inclut un récapitulatif `delivered_count` / `failed_count` / `total_recipients`.
 - `GET /api/push/{device_token}` et endpoints associés restent disponibles pour compatibilité / suivi de livraisons.
 - `GET /api/qrcodes/enrollment?url=<lien>` : retourne en SVG le QR code du lien d'inscription, utilisé par l'admin pour proposer un téléchargement prêt à imprimer.
 

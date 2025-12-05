@@ -8,6 +8,7 @@
 - Ne générez pas de fichiers binaires ; privilégiez les assets statiques (HTML/CSS/JS).
 - Pour vérifier rapidement le code sans MySQL local, le backend accepte aussi SQLite si `DATABASE_URL` pointe vers `sqlite:///...`.
 - Le frontend est servi par FastAPI via `StaticFiles`. Les pages principales : `index.html` (inscription) et `admin.html` (envoi des notifications).
+- L'accès à `admin.html` est désormais protégé par une authentification HTTP Basic (variables d'environnement `ADMIN_USERNAME` / `ADMIN_PASSWORD`, valeurs par défaut `admin` / `changeme`).
 - Commande de démarrage locale : `uvicorn backend.main:app --host 0.0.0.0 --port 8000` après avoir installé les dépendances (`pip install -r requirements.txt`).
 - La pile Docker est définie par `docker-compose.yml` (services `db` et `app`).
 - Si l'API retourne `Unknown column 'click_url' in 'field list'`, exécuter le script `last_update.sql` (nouvelle colonne `click_url` dans `notifications`) après avoir archivé l'ancien fichier dans `last_update_old.sql`.
@@ -27,6 +28,7 @@
 - Mise à jour 2025-11-30 : `subscribers.endpoint` n'est plus unique afin d'autoriser plusieurs inscriptions pour un même navigateur (ex. plusieurs liens d'enrôlement). Le script `last_update.sql` supprime l'index unique et crée un index non unique `idx_subscriber_endpoint`.
 - L'URL d'inscription (`index.html?business_id=...`) redirige désormais automatiquement les visiteurs déjà enrôlés vers la dernière notification du commerce via `GET /api/businesses/{id}/notifications/latest`. Préservez ce point d'entrée et le calcul de l'URL de fallback (`notification.html?image=...&title=...&body=...`) en cas de modification.
 - L'upload d'images passe par `POST /api/uploads` (stockage dans `frontend/uploads/`). Le formulaire admin remplit automatiquement l'URL de l'image après téléversement ; éviter les hotlinks externes.
+- L'endpoint `POST /api/notifications` renvoie désormais un récapitulatif d'envoi (destinataires traités, succès/échecs) pour alimenter l'UI admin.
 - Si aucun paramètre `image` n'est fourni ou que le fichier ciblé est invalide, la landing `notification.html` doit demander l'URL la plus récente via `/api/uploads/latest` avant d'utiliser un dégradé par défaut.
 - L'interface admin propose un thème clair/sombre (persisté via `localStorage`) partagé avec `notification.html`. Ne supprimez pas le sélecteur et privilégiez les variables CSS pour ajuster les couleurs.
 - L'interface admin propose un thème clair/sombre (persisté via `localStorage`) partagé avec `notification.html`. Ne supprimez pas le sélecteur et privilégiez les variables CSS pour ajuster les couleurs. La landing `notification.html` reste toutefois en mode unique (fond image sans overlay, carte en bas, boutons côte à côte) conformément au dernier besoin utilisateur : ne réintroduisez pas de toggle de thème sur cette page.
@@ -49,5 +51,6 @@
 
 - Le `readme.md` documente désormais une démo pas-à-pas de déploiement via Docker Compose (MySQL + backend + frontend). Gardez ce walkthrough en phase avec `docker-compose.yml` (ports, variables VAPID, commande `docker compose logs -f app`).
 - Un script `deploy.sh` automatise l'installation sur Ubuntu (Apache + Certbot + MySQL + systemd + synchronisation du dépôt dans `/opt/notificator`). Mettez-le à jour en même temps que les instructions du `readme.md` et vérifiez qu'il reste idempotent.
+- Le script `deploy.sh` stoppe les conteneurs Docker en cours (via `docker compose down` + `docker stop`) avant de continuer l'installation pour éviter les conflits de ports.
 - Si `deploy.sh` s'arrête sur une erreur `dpkg returned an error code (1)` lors de l'installation des paquets, lancer `dpkg --configure -a && apt-get -f install` puis relancer le script. Cette réparation est désormais tentée automatiquement avant l'arrêt.
 - Pour tester rapidement le front/back après une modification, lancez `DATABASE_URL=sqlite:///./dev.db uvicorn backend.main:app --host 0.0.0.0 --port 8000` depuis la racine : le frontend statique est servi par FastAPI. Les captures d'écran peuvent être faites à partir de `http://localhost:8000/index.html`.
