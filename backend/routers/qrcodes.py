@@ -15,7 +15,9 @@ def enrollment_qr(url: str = Query(..., min_length=1, max_length=2048)):
 
     buffer = io.BytesIO()
     qr.save(buffer, kind="svg", border=2, scale=6)
-    svg_payload = buffer.getvalue().decode()
+
+    raw_payload = buffer.getvalue()
+    svg_payload = raw_payload.decode("utf-8") if isinstance(raw_payload, (bytes, bytearray)) else str(raw_payload)
 
     if not svg_payload:
         raise HTTPException(status_code=500, detail="Génération du QR code impossible")
